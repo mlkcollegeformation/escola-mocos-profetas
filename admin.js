@@ -409,10 +409,10 @@
       return `
         <tr>
           <td class="td-num"><strong>${regNumFormatted}</strong></td>
-          <td class="td-date">${dateFormatted}</td>
           <td class="td-name">${escapeHtml(item.full_name || "—")}</td>
           <td class="td-phone">${phoneHtml}</td>
           <td class="td-email">${emailHtml}</td>
+          <td class="td-date">${dateFormatted}</td>
         </tr>
       `;
     }).join("");

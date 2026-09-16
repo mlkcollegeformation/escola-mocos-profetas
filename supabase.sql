@@ -33,9 +33,45 @@ with check (
   and char_length(email) >= 5
 );
 
--- Coluna registration_number com sequence (preenchida automaticamente pelo banco)
--- create sequence if not exists public.registrations_seq start 1;
--- alter table public.registrations add column if not exists registration_number bigint default nextval('public.registrations_seq');
+-- Sequence oficial da coluna registration_number
+-- create sequence if not exists public.registration_number_seq start 1;
+-- alter table public.registrations add column if not exists registration_number bigint default nextval('public.registration_number_seq');
+
+-- ==============================================================================
+-- AUTOMAÇÃO DE CONTROLE DE SEQUÊNCIA (AFTER DELETE - STATEMENT LEVEL)
+-- Reinicia a sequence para 1 apenas se a tabela ficar com 0 registros.
+-- ==============================================================================
+
+create or replace function public.reset_registration_number_seq_if_empty()
+returns trigger
+language plpgsql
+security definer
+set search_path = public
+as $$
+begin
+  -- 1. Verifica se ainda existe pelo menos um registro em public.registrations
+  if exists (select 1 from public.registrations limit 1) then
+    -- Se existir qualquer registro, NÃO faz nada na sequence
+    return null;
+  end if;
+
+  -- 2. Se a tabela estiver completamente vazia (0 registros):
+  perform setval(
+    'public.registration_number_seq'::regclass,
+    1,
+    false
+  );
+
+  return null;
+end;
+$$;
+
+drop trigger if exists trg_reset_registration_number_seq_if_empty on public.registrations;
+
+create trigger trg_reset_registration_number_seq_if_empty
+after delete on public.registrations
+for each statement
+execute function public.reset_registration_number_seq_if_empty();
 
 -- Não crie policy de SELECT para anon.
 -- Assim os visitantes não conseguem ler a lista de inscritos.

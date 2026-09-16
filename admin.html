@@ -3,24 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#0B0907" />
-  <title>Área Administrativa | Escola de Moços e Profetas</title>
+  <meta name="theme-color" content="#061525" />
+  <title>Área Administrativa | MLK College Formation</title>
 
+  <!-- Google Fonts: Cormorant Garamond & Montserrat -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="admin.css" />
+  <link rel="stylesheet" href="admin.css?v=2" />
 </head>
 <body>
-  <div class="page-glow page-glow--one"></div>
-  <div class="page-glow page-glow--two"></div>
-
   <!-- TELA DE LOGIN (Visível por padrão até autenticar) -->
   <main class="auth-wrapper" id="loginView">
     <div class="auth-card">
       <div class="auth-header">
-        <span class="eyebrow">TABERNÁCULO DE PROFETAS</span>
+        <div class="auth-logo-wrap">
+          <img src="assets/logo-mlk.png" alt="Brasão MLK College Formation" class="auth-logo" />
+        </div>
+        <span class="eyebrow">MLK COLLEGE FORMATION</span>
         <h1>Área <span>Administrativa</span></h1>
         <p>Acesso restrito para gestão de inscrições da Escola de Moços e Profetas.</p>
       </div>
@@ -33,7 +34,7 @@
             name="email"
             type="email"
             autocomplete="username"
-            placeholder="admin@tabernaculo.com"
+            placeholder="admin@mlkcollege.com"
             required
           />
         </div>
@@ -67,13 +68,16 @@
     </div>
   </main>
 
-  <!-- TELA DE REDEFINIÇÃO DE SENHA (Exibida exclusivamente no evento PASSWORD_RECOVERY) -->
+  <!-- TELA DE REDEFINIÇÃO DE SENHA (Exibida no evento PASSWORD_RECOVERY) -->
   <main class="auth-wrapper hidden" id="resetPasswordView">
     <div class="auth-card">
       <div class="auth-header">
+        <div class="auth-logo-wrap">
+          <img src="assets/logo-mlk.png" alt="Brasão MLK College Formation" class="auth-logo" />
+        </div>
         <span class="eyebrow">RECUPERAÇÃO DE CONTA</span>
         <h1>Criar <span>nova senha</span></h1>
-        <p>Defina uma nova senha segura para acessar a Área Administrativa.</p>
+        <p>Defina uma nova senha segura para acessar a Área Administrativa da MLK.</p>
       </div>
 
       <form class="auth-form" id="resetPasswordForm" novalidate>
@@ -128,13 +132,18 @@
     </div>
   </main>
 
-  <!-- PAINEL DASHBOARD (Oculto até confirmação de sessão ativa) -->
+  <!-- PAINEL DASHBOARD (Exibido após login com sucesso) -->
   <div class="dashboard-wrapper hidden" id="dashboardView">
     <header class="dash-nav">
       <div class="container dash-nav__inner">
         <div class="dash-brand">
-          <span class="eyebrow">TABERNÁCULO DE PROFETAS</span>
-          <h2>Painel de <span>Inscrições</span></h2>
+          <div class="dash-logo-wrap">
+            <img src="assets/logo-mlk.png" alt="Brasão MLK" class="dash-logo" />
+          </div>
+          <div class="dash-brand-text">
+            <span class="eyebrow">MLK COLLEGE FORMATION</span>
+            <h2>Painel de <span>Inscrições</span></h2>
+          </div>
         </div>
 
         <div class="dash-user">
@@ -142,6 +151,9 @@
             <span class="user-icon">👤</span>
             <span class="user-email" id="userEmailBadge">admin</span>
           </div>
+          <a href="index.html" class="btn btn--outline btn--sm btn--site" target="_blank" rel="noopener">
+            Ver Site
+          </a>
           <button class="btn btn--outline btn--sm" id="logoutBtn" type="button">
             Sair
           </button>
@@ -149,88 +161,89 @@
       </div>
     </header>
 
-    <main class="container dash-content">
-      <!-- Métricas -->
-      <section class="stats-grid">
-        <article class="stat-card">
-          <span class="stat-label">Total de Inscritos</span>
-          <strong class="stat-value" id="statTotal">—</strong>
-          <small class="stat-hint">Cadastros confirmados</small>
-        </article>
+    <main class="container dash-main">
+      <!-- CARDS DE MÉTRICAS -->
+      <section class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-header">
+            <span class="metric-label">TOTAL DE INSCRITOS</span>
+            <span class="metric-icon">📋</span>
+          </div>
+          <div class="metric-value" id="statTotal">0</div>
+          <span class="metric-hint">Total acumulado de inscritos</span>
+        </div>
 
-        <article class="stat-card">
-          <span class="stat-label">Inscritos Hoje</span>
-          <strong class="stat-value" id="statToday">—</strong>
-          <small class="stat-hint" id="todayDateHint">Nesta data</small>
-        </article>
-
-        <article class="stat-card stat-card--accent">
-          <span class="stat-label">Evento</span>
-          <strong class="stat-value stat-value--text">07 e 08/11</strong>
-          <small class="stat-hint">Vila Maria Alta — SP</small>
-        </article>
+        <div class="metric-card metric-card--highlight">
+          <div class="metric-header">
+            <span class="metric-label">INSCRITOS HOJE</span>
+            <span class="metric-icon">⚡</span>
+          </div>
+          <div class="metric-value" id="statToday">0</div>
+          <span class="metric-hint" id="todayDateHint">Inscrições realizadas hoje</span>
+        </div>
       </section>
 
-      <!-- Barra de Ações / Filtro -->
-      <section class="action-bar">
+      <!-- BARRA DE FERRAMENTAS: BUSCA, ATUALIZAÇÃO E EXPORTAÇÃO CSV -->
+      <section class="toolbar-card">
         <div class="search-box">
           <span class="search-icon">🔍</span>
           <input
             id="searchInput"
-            type="search"
-            placeholder="Buscar por nome, telefone ou e-mail..."
-            aria-label="Filtrar inscritos"
+            type="text"
+            placeholder="Buscar por nome, telefone, e-mail ou nº..."
+            aria-label="Buscar inscrição"
           />
-          <button id="clearSearchBtn" class="clear-btn hidden" type="button" title="Limpar busca">✕</button>
+          <button class="clear-btn hidden" id="clearSearchBtn" type="button" title="Limpar busca">✕</button>
         </div>
 
-        <div class="action-buttons">
+        <div class="toolbar-actions">
           <button class="btn btn--secondary" id="refreshBtn" type="button" title="Atualizar dados">
-            ↻ Atualizar
+            🔄 Atualizar
           </button>
-          <button class="btn btn--primary" id="exportCsvBtn" type="button">
-            ⬇ Exportar CSV
+          <button class="btn btn--primary" id="exportCsvBtn" type="button" title="Exportar tabela para arquivo CSV">
+            📥 Exportar CSV
           </button>
         </div>
       </section>
 
-      <!-- Status / Contagem de Resultados -->
-      <div class="list-meta">
-        <span id="resultCount">Carregando inscritos...</span>
-      </div>
+      <!-- TABELA DE INSCRITOS -->
+      <section class="table-card">
+        <div class="table-header">
+          <h3 class="table-title">Inscrições Registradas</h3>
+          <span class="result-count" id="resultCount">Carregando inscrições...</span>
+        </div>
 
-      <!-- Tabela de Inscrições -->
-      <section class="table-container">
-        <table class="registrations-table" id="registrationsTable">
-          <thead>
-            <tr>
-              <th>Nº</th>
-              <th>Data / Hora</th>
-              <th>Nome Completo</th>
-              <th>Telefone / WhatsApp</th>
-              <th>E-mail</th>
-            </tr>
-          </thead>
-          <tbody id="registrationsTbody">
-            <tr>
-              <td colspan="5" class="table-empty">Carregando dados com segurança...</td>
-            </tr>
-          </tbody>
-        </table>
+        <div class="table-responsive">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th style="width: 80px;">Nº</th>
+                <th>Nome</th>
+                <th>Telefone</th>
+                <th>E-mail</th>
+                <th style="width: 170px;">Data de Inscrição</th>
+              </tr>
+            </thead>
+            <tbody id="registrationsTbody">
+              <tr>
+                <td colspan="5" class="table-loading">Carregando dados...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
       </section>
     </main>
 
     <footer class="dash-footer">
       <div class="container dash-footer__inner">
-        <small>Tabernáculo de Profetas • Escola de Moços e Profetas • Gestão Interna</small>
-        <a href="index.html" class="back-link">Ir para o site do evento →</a>
+        <small>© 2026 MLK College Formation • Faculdade de Teologia Martin Luther King</small>
+        <small class="secure-badge">🔒 Conexão Segura Supabase RLS</small>
       </div>
     </footer>
   </div>
 
-  <!-- Scripts -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="admin.js"></script>
+  <script src="admin.js?v=4"></script>
 </body>
 </html>

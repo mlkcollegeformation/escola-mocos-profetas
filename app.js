@@ -1,3 +1,8 @@
+// ==========================================================================
+// MLK COLLEGE FORMATION — ESCOLA DE MOÇOS E PROFETAS
+// FLUXO PÚBLICO DE INSCRIÇÃO & GERAÇÃO DE COMPROVANTE
+// ==========================================================================
+
 const form = document.getElementById("registrationForm");
 const submitButton = document.getElementById("submitButton");
 const formStatus = document.getElementById("formStatus");
@@ -8,15 +13,18 @@ const downloadVoucherBtn = document.getElementById("downloadVoucherBtn");
 
 let currentVoucherData = null;
 
+// Normalização de telefone para apenas dígitos
 function normalizePhone(value) {
   return value.replace(/\D/g, "");
 }
 
+// Mensagens de erro por campo
 function setError(field, message = "") {
   const el = document.querySelector(`[data-error-for="${field}"]`);
   if (el) el.textContent = message;
 }
 
+// Validação front-end amigável
 function validateForm() {
   let ok = true;
   const fullName = document.getElementById("fullName").value.trim();
@@ -27,19 +35,19 @@ function validateForm() {
   ["fullName", "phone", "email"].forEach((f) => setError(f));
 
   if (fullName.length < 3 || !fullName.includes(" ")) {
-    setError("fullName", "Informe seu nome completo.");
+    setError("fullName", "Informe seu nome completo (ao menos nome e sobrenome).");
     ok = false;
   }
 
   const phoneDigits = normalizePhone(phone);
   if (phoneDigits.length < 10 || phoneDigits.length > 13) {
-    setError("phone", "Informe um telefone válido com DDD.");
+    setError("phone", "Informe um telefone válido com DDD (Ex.: 11 99999-9999).");
     ok = false;
   }
 
   const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
   if (!emailOk) {
-    setError("email", "Informe um e-mail válido.");
+    setError("email", "Informe um endereço de e-mail válido.");
     ok = false;
   }
 
@@ -55,104 +63,110 @@ function validateForm() {
   return ok;
 }
 
-// Máscara simples de telefone BR
-document.getElementById("phone").addEventListener("input", (e) => {
-  let v = e.target.value.replace(/\D/g, "").slice(0, 11);
-  if (v.length > 10) {
-    v = v.replace(/^(\d{2})(\d{5})(\d{4}).*/, "($1) $2-$3");
-  } else if (v.length > 6) {
-    v = v.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, "($1) $2-$3");
-  } else if (v.length > 2) {
-    v = v.replace(/^(\d{2})(\d{0,5}).*/, "($1) $2");
-  } else {
-    v = v.replace(/^(\d*)/, "($1");
-  }
-  e.target.value = v;
-});
+// Máscara dinâmica de telefone brasileiro (DDD + 8 ou 9 dígitos)
+const phoneInput = document.getElementById("phone");
+if (phoneInput) {
+  phoneInput.addEventListener("input", (e) => {
+    let v = e.target.value.replace(/\D/g, "").slice(0, 11);
+    if (v.length > 10) {
+      v = v.replace(/^(\d{2})(\d{5})(\d{4}).*/, "($1) $2-$3");
+    } else if (v.length > 6) {
+      v = v.replace(/^(\d{2})(\d{4})(\d{0,4}).*/, "($1) $2-$3");
+    } else if (v.length > 2) {
+      v = v.replace(/^(\d{2})(\d{0,5}).*/, "($1) $2");
+    } else {
+      v = v.replace(/^(\d*)/, "($1");
+    }
+    e.target.value = v;
+  });
+}
 
-form.addEventListener("submit", async (e) => {
-  e.preventDefault();
-  if (!validateForm()) return;
+// Envio de formulário via RPC segura do Supabase (create_registration)
+if (form) {
+  form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+    if (!validateForm()) return;
 
-  const cfg = window.APP_CONFIG || {};
-  if (!cfg.SUPABASE_URL || !cfg.SUPABASE_ANON_KEY ||
-      cfg.SUPABASE_URL.includes("COLE_AQUI") ||
-      cfg.SUPABASE_ANON_KEY.includes("COLE_AQUI")) {
-    formStatus.className = "form-status error";
-    formStatus.textContent = "Configuração pendente: conecte o Supabase em config.js antes de publicar.";
-    return;
-  }
+    const cfg = window.APP_CONFIG || {};
+    if (!cfg.SUPABASE_URL || !cfg.SUPABASE_ANON_KEY ||
+        cfg.SUPABASE_URL.includes("COLE_AQUI") ||
+        cfg.SUPABASE_ANON_KEY.includes("COLE_AQUI")) {
+      formStatus.className = "form-status error";
+      formStatus.textContent = "Configuração pendente: conecte o Supabase em config.js antes de publicar.";
+      return;
+    }
 
-  submitButton.disabled = true;
-  submitButton.textContent = "Enviando...";
-  formStatus.textContent = "";
+    submitButton.disabled = true;
+    submitButton.textContent = "PROCESSANDO INSCRIÇÃO...";
+    formStatus.textContent = "";
 
-  try {
-    const supabaseClient = window.supabase.createClient(
-      cfg.SUPABASE_URL,
-      cfg.SUPABASE_ANON_KEY,
-      {
-        auth: {
-          persistSession: false,
-          autoRefreshToken: false,
-          detectSessionInUrl: false
+    try {
+      const supabaseClient = window.supabase.createClient(
+        cfg.SUPABASE_URL,
+        cfg.SUPABASE_ANON_KEY,
+        {
+          auth: {
+            persistSession: false,
+            autoRefreshToken: false,
+            detectSessionInUrl: false
+          }
         }
+      );
+
+      const registeredFullName = document.getElementById("fullName").value.trim();
+      const registeredPhone = normalizePhone(document.getElementById("phone").value);
+      const registeredEmail = document.getElementById("email").value.trim().toLowerCase();
+      const registeredConsent = document.getElementById("consent").checked;
+
+      // Chamada RPC segura create_registration (SECURITY DEFINER no Supabase)
+      const { data, error } = await supabaseClient.rpc("create_registration", {
+        p_full_name: registeredFullName,
+        p_phone: registeredPhone,
+        p_email: registeredEmail,
+        p_consent: registeredConsent
+      });
+
+      if (error) {
+        if (error.code === "23505" || (error.message && error.message.includes("duplicate"))) {
+          throw new Error("Este e-mail ou telefone já foi cadastrado para este evento.");
+        }
+        throw error;
       }
-    );
 
-    const registeredFullName = document.getElementById("fullName").value.trim();
-    const registeredPhone = normalizePhone(document.getElementById("phone").value);
-    const registeredEmail = document.getElementById("email").value.trim().toLowerCase();
-    const registeredConsent = document.getElementById("consent").checked;
+      const regData = Array.isArray(data) ? data[0] : data;
+      const rawNumber = regData?.registration_number;
 
-    // Chamada RPC segura create_registration (SECURITY DEFINER no Supabase)
-    const { data, error } = await supabaseClient.rpc("create_registration", {
-      p_full_name: registeredFullName,
-      p_phone: registeredPhone,
-      p_email: registeredEmail,
-      p_consent: registeredConsent
-    });
-
-    if (error) {
-      if (error.code === "23505" || (error.message && error.message.includes("duplicate"))) {
-        throw new Error("Este e-mail ou telefone já foi cadastrado para este evento.");
+      if (rawNumber === null || rawNumber === undefined) {
+        throw new Error("Não foi possível obter o número oficial de inscrição gerado.");
       }
-      throw error;
+
+      const formattedNumber = String(rawNumber).padStart(3, "0");
+      const confirmedName = regData?.full_name || registeredFullName;
+
+      // Ocultar formulário e exibir comprovante oficial MLK
+      form.classList.add("hidden");
+      voucherNumber.textContent = formattedNumber;
+      voucherName.textContent = confirmedName;
+      voucherCard.classList.remove("hidden");
+
+      currentVoucherData = {
+        number: formattedNumber,
+        name: confirmedName
+      };
+
+      voucherCard.scrollIntoView({ behavior: "smooth", block: "center" });
+    } catch (err) {
+      console.error("Erro na inscrição:", err);
+      formStatus.className = "form-status error";
+      formStatus.textContent = err.message || "Não foi possível concluir agora. Tente novamente em instantes.";
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = "REALIZAR INSCRIÇÃO";
     }
+  });
+}
 
-    const regData = Array.isArray(data) ? data[0] : data;
-    const rawNumber = regData?.registration_number;
-
-    if (rawNumber === null || rawNumber === undefined) {
-      throw new Error("Não foi possível obter o número de inscrição gerado.");
-    }
-
-    const formattedNumber = String(rawNumber).padStart(3, "0");
-    const confirmedName = regData?.full_name || registeredFullName;
-
-    // Substituir área do formulário pelo comprovante elegante
-    form.classList.add("hidden");
-    voucherNumber.textContent = formattedNumber;
-    voucherName.textContent = confirmedName;
-    voucherCard.classList.remove("hidden");
-
-    currentVoucherData = {
-      number: formattedNumber,
-      name: confirmedName
-    };
-
-    voucherCard.scrollIntoView({ behavior: "smooth", block: "center" });
-  } catch (err) {
-    console.error("Erro na inscrição:", err);
-    formStatus.className = "form-status error";
-    formStatus.textContent = err.message || "Não foi possível concluir agora. Tente novamente em instantes.";
-  } finally {
-    submitButton.disabled = false;
-    submitButton.textContent = "Confirmar inscrição";
-  }
-});
-
-// Download do comprovante elegante em formato PNG via Canvas 2D
+// Download do comprovante oficial em formato PNG via HTML5 Canvas 2D
 if (downloadVoucherBtn) {
   downloadVoucherBtn.addEventListener("click", async () => {
     const number = (currentVoucherData?.number || voucherNumber?.textContent || "001").trim();
@@ -160,7 +174,7 @@ if (downloadVoucherBtn) {
 
     const originalText = downloadVoucherBtn.textContent;
     downloadVoucherBtn.disabled = true;
-    downloadVoucherBtn.textContent = "⏳ Gerando comprovante...";
+    downloadVoucherBtn.textContent = "⏳ GERANDO COMPROVANTE PNG...";
 
     try {
       await downloadVoucherAsPng(number, name);
@@ -174,8 +188,8 @@ if (downloadVoucherBtn) {
   });
 }
 
+// Função de renderização em Canvas com a nova identidade MLK College Formation
 async function downloadVoucherAsPng(number, name) {
-  // Aguarda carregamento de fontes para nitidez perfeita
   if (document.fonts && document.fonts.ready) {
     try {
       await document.fonts.ready;
@@ -185,160 +199,186 @@ async function downloadVoucherAsPng(number, name) {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
 
-  // Alta resolução: 1080 x 1350 px
+  // Alta Resolução: 1080 x 1350 px (proporção 4:5 ideal para celulares e compartilhamento)
   canvas.width = 1080;
   canvas.height = 1350;
 
-  // Fundo degradê escuro
+  // Fundo Azul-marinho Profundo em Degradê
   const bgGrad = ctx.createLinearGradient(0, 0, 0, canvas.height);
-  bgGrad.addColorStop(0, "#0e0a07");
-  bgGrad.addColorStop(0.5, "#150f09");
-  bgGrad.addColorStop(1, "#090604");
+  bgGrad.addColorStop(0, "#040d17");
+  bgGrad.addColorStop(0.35, "#061525");
+  bgGrad.addColorStop(0.7, "#071827");
+  bgGrad.addColorStop(1, "#03080e");
   ctx.fillStyle = bgGrad;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Brilho radial dourado no topo/centro
-  const glowGrad = ctx.createRadialGradient(540, 380, 40, 540, 380, 500);
-  glowGrad.addColorStop(0, "rgba(213, 163, 70, 0.18)");
-  glowGrad.addColorStop(1, "rgba(213, 163, 70, 0)");
+  // Brilho Radial Dourado no Centro/Superior
+  const glowGrad = ctx.createRadialGradient(540, 420, 50, 540, 420, 550);
+  glowGrad.addColorStop(0, "rgba(201, 162, 77, 0.16)");
+  glowGrad.addColorStop(1, "rgba(201, 162, 77, 0)");
   ctx.fillStyle = glowGrad;
   ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  // Moldura externa dourada dupla
+  // Moldura Externa Dupla Dourada
   ctx.save();
-  ctx.strokeStyle = "rgba(213, 163, 70, 0.55)";
+  ctx.strokeStyle = "rgba(201, 162, 77, 0.65)";
   ctx.lineWidth = 3;
-  drawRoundedRect(ctx, 40, 40, 1000, 1270, 28);
+  drawRoundedRect(ctx, 42, 42, 996, 1266, 26);
   ctx.stroke();
 
-  ctx.strokeStyle = "rgba(213, 163, 70, 0.22)";
+  ctx.strokeStyle = "rgba(201, 162, 77, 0.25)";
   ctx.lineWidth = 1.5;
-  drawRoundedRect(ctx, 52, 52, 976, 1246, 22);
+  drawRoundedRect(ctx, 54, 54, 972, 1242, 20);
   ctx.stroke();
 
-  // Cantoneiras ornamentais
-  drawCornerAccents(ctx, 52, 52, 976, 1246, 30);
+  // Cantoneiras Ornamentais Douradas
+  drawCornerAccents(ctx, 54, 54, 972, 1242, 34);
   ctx.restore();
+
+  // Tentar carregar o brasão oficial MLK
+  try {
+    const logoImg = await loadImage("assets/logo-mlk.png");
+    if (logoImg) {
+      const logoW = 105;
+      const logoH = 115;
+      ctx.drawImage(logoImg, 540 - logoW / 2, 85, logoW, logoH);
+    }
+  } catch (err) {
+    console.warn("Logo MLK não carregou para o Canvas, continuando sem ele:", err);
+  }
 
   ctx.textAlign = "center";
 
-  // Badge superior: ✓ INSCRIÇÃO CONFIRMADA
-  const badgeY = 130;
+  // Identificação Institucional
+  ctx.font = "bold 26px 'Cormorant Garamond', Georgia, serif";
+  ctx.fillStyle = "#F8F6F0";
+  ctx.fillText("MLK COLLEGE FORMATION", 540, 230);
+
+  ctx.font = "600 15px 'Montserrat', sans-serif";
+  ctx.fillStyle = "#E4C36A";
+  ctx.letterSpacing = "2px";
+  ctx.fillText("FACULDADE DE TEOLOGIA MARTIN LUTHER KING", 540, 256);
+
+  // Badge: ✓ INSCRIÇÃO CONFIRMADA
+  const badgeY = 285;
   const badgeW = 440;
-  const badgeH = 50;
+  const badgeH = 46;
   ctx.save();
-  ctx.fillStyle = "rgba(46, 196, 122, 0.12)";
-  ctx.strokeStyle = "rgba(46, 196, 122, 0.5)";
-  ctx.lineWidth = 2;
-  drawRoundedRect(ctx, 540 - badgeW / 2, badgeY, badgeW, badgeH, 25);
+  ctx.fillStyle = "rgba(62, 207, 142, 0.12)";
+  ctx.strokeStyle = "rgba(62, 207, 142, 0.55)";
+  ctx.lineWidth = 1.5;
+  drawRoundedRect(ctx, 540 - badgeW / 2, badgeY, badgeW, badgeH, 23);
   ctx.fill();
   ctx.stroke();
 
-  ctx.font = "bold 22px 'Inter', sans-serif";
+  ctx.font = "bold 19px 'Montserrat', sans-serif";
   ctx.fillStyle = "#5fe29e";
-  ctx.fillText("✓ INSCRIÇÃO CONFIRMADA", 540, badgeY + 33);
+  ctx.fillText("✓ INSCRIÇÃO CONFIRMADA", 540, badgeY + 30);
   ctx.restore();
 
   // Rótulo: Nº DE INSCRIÇÃO
-  ctx.font = "bold 20px 'Inter', sans-serif";
-  ctx.fillStyle = "#D5A346";
-  ctx.fillText("Nº DE INSCRIÇÃO", 540, 240);
+  ctx.font = "700 18px 'Montserrat', sans-serif";
+  ctx.fillStyle = "#C9A24D";
+  ctx.fillText("Nº DE INSCRIÇÃO", 540, 385);
 
-  // Número em destaque dourado: 001
-  ctx.font = "bold 100px 'Cinzel', 'Times New Roman', serif";
-  const numGrad = ctx.createLinearGradient(0, 280, 0, 390);
-  numGrad.addColorStop(0, "#fff5dc");
-  numGrad.addColorStop(0.6, "#f2d07b");
-  numGrad.addColorStop(1, "#bd7b20");
+  // Número Oficial em Destaque Dourado Metálico
+  ctx.font = "bold 96px 'Cormorant Garamond', Georgia, serif";
+  const numGrad = ctx.createLinearGradient(0, 410, 0, 505);
+  numGrad.addColorStop(0, "#FFFFFF");
+  numGrad.addColorStop(0.5, "#F7DF94");
+  numGrad.addColorStop(1, "#9A752B");
   ctx.fillStyle = numGrad;
-  ctx.fillText(number, 540, 360);
+  ctx.fillText(number, 540, 485);
 
-  // Linha divisória dourada
+  // Linha Divisória Dourada
   const divGrad = ctx.createLinearGradient(160, 0, 920, 0);
-  divGrad.addColorStop(0, "rgba(213, 163, 70, 0)");
-  divGrad.addColorStop(0.5, "rgba(213, 163, 70, 0.7)");
-  divGrad.addColorStop(1, "rgba(213, 163, 70, 0)");
+  divGrad.addColorStop(0, "rgba(201, 162, 77, 0)");
+  divGrad.addColorStop(0.5, "rgba(201, 162, 77, 0.8)");
+  divGrad.addColorStop(1, "rgba(201, 162, 77, 0)");
   ctx.strokeStyle = divGrad;
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.moveTo(160, 410);
-  ctx.lineTo(920, 410);
+  ctx.moveTo(160, 525);
+  ctx.lineTo(920, 525);
   ctx.stroke();
 
-  // Saudação com nome
-  ctx.font = "bold 32px 'Inter', sans-serif";
-  ctx.fillStyle = "#F5E8C7";
-  const displayName = name.length > 34 ? name.slice(0, 32) + "..." : name;
-  ctx.fillText(`${displayName}, sua inscrição foi realizada com sucesso!`, 540, 475);
+  // Saudação com Nome Real
+  ctx.font = "bold 30px 'Montserrat', sans-serif";
+  ctx.fillStyle = "#F8F6F0";
+  const displayName = name.length > 32 ? name.slice(0, 30) + "..." : name;
+  ctx.fillText(`${displayName}, sua inscrição foi realizada com sucesso!`, 540, 580);
 
   // Card do Evento
-  const cardX = 120;
-  const cardY = 530;
-  const cardW = 840;
-  const cardH = 480;
+  const cardX = 110;
+  const cardY = 625;
+  const cardW = 860;
+  const cardH = 430;
 
   ctx.save();
-  ctx.fillStyle = "rgba(255, 255, 255, 0.025)";
-  ctx.strokeStyle = "rgba(213, 163, 70, 0.28)";
+  ctx.fillStyle = "rgba(7, 24, 39, 0.75)";
+  ctx.strokeStyle = "rgba(201, 162, 77, 0.35)";
   ctx.lineWidth = 1.5;
-  drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 20);
+  drawRoundedRect(ctx, cardX, cardY, cardW, cardH, 18);
   ctx.fill();
   ctx.stroke();
 
-  // Título do evento
-  ctx.font = "bold 36px 'Cinzel', 'Times New Roman', serif";
-  ctx.fillStyle = "#f2d07b";
+  // Título do Evento
+  ctx.font = "bold 40px 'Cormorant Garamond', Georgia, serif";
+  ctx.fillStyle = "#F7DF94";
   ctx.fillText("ESCOLA DE MOÇOS E PROFETAS", 540, cardY + 70);
 
-  ctx.font = "500 24px 'Inter', sans-serif";
-  ctx.fillStyle = "#A89886";
-  ctx.fillText("Tabernáculo de Profetas", 540, cardY + 115);
+  ctx.font = "500 20px 'Montserrat', sans-serif";
+  ctx.fillStyle = "#C8D3DE";
+  ctx.fillText("Formação dos 5 Ministérios — Coluna Profética", 540, cardY + 110);
 
-  // Linha sutil interna
-  ctx.strokeStyle = "rgba(213, 163, 70, 0.2)";
+  // Linha Interna Sutil
+  ctx.strokeStyle = "rgba(201, 162, 77, 0.22)";
   ctx.beginPath();
-  ctx.moveTo(cardX + 60, cardY + 150);
-  ctx.lineTo(cardX + cardW - 60, cardY + 150);
+  ctx.moveTo(cardX + 70, cardY + 145);
+  ctx.lineTo(cardX + cardW - 70, cardY + 145);
   ctx.stroke();
 
   // Datas e Local
-  ctx.font = "600 28px 'Inter', sans-serif";
-  ctx.fillStyle = "#F5E8C7";
-  ctx.fillText("📅 07/11 — 16h às 22h", 540, cardY + 220);
-  ctx.fillText("📅 08/11 — 08h às 11h", 540, cardY + 285);
-  ctx.fillText("📍 Vila Maria Alta — SP", 540, cardY + 350);
+  ctx.font = "600 26px 'Montserrat', sans-serif";
+  ctx.fillStyle = "#F8F6F0";
+  ctx.fillText("📅 07/11 — das 16h às 22h", 540, cardY + 205);
+  ctx.fillText("📅 08/11 — das 08h às 11h", 540, cardY + 265);
+  ctx.fillText("📍 Vila Maria Alta — São Paulo / SP", 540, cardY + 325);
 
-  ctx.font = "400 22px 'Inter', sans-serif";
-  ctx.fillStyle = "#A89886";
-  ctx.fillText("Av. Alberto Byington, 2354", 540, cardY + 395);
+  ctx.font = "400 21px 'Montserrat', sans-serif";
+  ctx.fillStyle = "#8E9EAF";
+  ctx.fillText("Av. Alberto Byington, 2354", 540, cardY + 368);
   ctx.restore();
 
   // Tag: SUA VAGA ESTÁ CONFIRMADA
-  const tagY = 1050;
-  const tagW = 840;
-  const tagH = 75;
+  const tagY = 1085;
+  const tagW = 860;
+  const tagH = 72;
   ctx.save();
-  ctx.fillStyle = "rgba(213, 163, 70, 0.12)";
-  ctx.strokeStyle = "rgba(213, 163, 70, 0.35)";
+  ctx.fillStyle = "rgba(201, 162, 77, 0.12)";
+  ctx.strokeStyle = "rgba(201, 162, 77, 0.4)";
   ctx.lineWidth = 1.5;
-  drawRoundedRect(ctx, 540 - tagW / 2, tagY, tagW, tagH, 14);
+  drawRoundedRect(ctx, 540 - tagW / 2, tagY, tagW, tagH, 12);
   ctx.fill();
   ctx.stroke();
 
-  ctx.font = "bold 28px 'Inter', sans-serif";
-  ctx.fillStyle = "#f2d07b";
-  ctx.fillText("SUA VAGA ESTÁ CONFIRMADA", 540, tagY + 48);
+  ctx.font = "bold 26px 'Montserrat', sans-serif";
+  ctx.fillStyle = "#E4C36A";
+  ctx.fillText("SUA VAGA ESTÁ CONFIRMADA", 540, tagY + 46);
   ctx.restore();
 
-  // Rodapé institucional
-  ctx.font = "400 18px 'Inter', sans-serif";
-  ctx.fillStyle = "#7F6F5F";
-  ctx.fillText("Apresente este comprovante no credenciamento do evento.", 540, 1195);
-  ctx.fillText("Tabernáculo de Profetas • Discípulos hoje, referências amanhã.", 540, 1230);
+  // Rodapé Institucional
+  ctx.font = "400 17px 'Montserrat', sans-serif";
+  ctx.fillStyle = "#8E9EAF";
+  ctx.fillText("Apresente este comprovante oficial no credenciamento do evento.", 540, 1205);
 
-  // Baixar imagem PNG usando Blob com fallback para DataURL
+  ctx.font = "italic 19px 'Cormorant Garamond', Georgia, serif";
+  ctx.fillStyle = "#C9A24D";
+  ctx.fillText("“Instruir hoje, transformar o amanhã.”", 540, 1240);
+
+  // Baixar imagem gerada
   return new Promise((resolve) => {
-    const filename = `comprovante-inscricao-${number}.png`;
+    const filename = `comprovante-mlk-${number}.png`;
     if (canvas.toBlob) {
       canvas.toBlob((blob) => {
         if (!blob) {
@@ -365,6 +405,16 @@ async function downloadVoucherAsPng(number, name) {
       triggerDataUrlDownload(canvas, filename);
       resolve();
     }
+  });
+}
+
+function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = src;
   });
 }
 
@@ -398,7 +448,7 @@ function drawRoundedRect(ctx, x, y, width, height, radius) {
 }
 
 function drawCornerAccents(ctx, x, y, width, height, len) {
-  ctx.strokeStyle = "rgba(213, 163, 70, 0.65)";
+  ctx.strokeStyle = "rgba(201, 162, 77, 0.75)";
   ctx.lineWidth = 2.5;
 
   // Canto superior esquerdo
@@ -430,22 +480,65 @@ function drawCornerAccents(ctx, x, y, width, height, len) {
   ctx.stroke();
 }
 
-// Controle de som do vídeo de apresentação
+// ==========================================================================
+// CONTROLE DE VÍDEO & SOM (HEADLINE BACKGROUND)
+// ==========================================================================
 const heroVideo = document.getElementById("heroVideo");
 const soundToggle = document.getElementById("soundToggle");
+const soundIcon = document.getElementById("soundIcon");
+const soundText = document.getElementById("soundText");
 
 if (heroVideo && soundToggle) {
   soundToggle.addEventListener("click", () => {
     if (heroVideo.muted) {
       heroVideo.muted = false;
       heroVideo.play().catch(() => {});
-      soundToggle.textContent = "🔇 Silenciar";
-      soundToggle.setAttribute("aria-label", "Silenciar");
+      if (soundIcon) soundIcon.textContent = "🔇";
+      if (soundText) soundText.textContent = "Silenciar";
+      soundToggle.setAttribute("aria-label", "Silenciar vídeo");
     } else {
       heroVideo.muted = true;
-      soundToggle.textContent = "🔊 Ativar som";
-      soundToggle.setAttribute("aria-label", "Ativar som");
+      if (soundIcon) soundIcon.textContent = "🔊";
+      if (soundText) soundText.textContent = "Ativar som";
+      soundToggle.setAttribute("aria-label", "Ativar som do vídeo");
     }
   });
 }
 
+// ==========================================================================
+// NAVEGAÇÃO MOBILE (MENU DRAWER)
+// ==========================================================================
+const hamburgerBtn = document.getElementById("hamburgerBtn");
+const mobileDrawer = document.getElementById("mobileDrawer");
+const drawerCloseBtn = document.getElementById("drawerCloseBtn");
+const drawerBackdrop = document.getElementById("drawerBackdrop");
+const mobileNavLinks = document.querySelectorAll(".mobile-nav-link, .mobile-drawer__cta");
+
+function openMobileMenu() {
+  if (mobileDrawer) {
+    mobileDrawer.classList.add("open");
+    mobileDrawer.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
+  }
+}
+
+function closeMobileMenu() {
+  if (mobileDrawer) {
+    mobileDrawer.classList.remove("open");
+    mobileDrawer.setAttribute("aria-hidden", "true");
+    document.body.style.overflow = "";
+  }
+}
+
+if (hamburgerBtn) {
+  hamburgerBtn.addEventListener("click", openMobileMenu);
+}
+if (drawerCloseBtn) {
+  drawerCloseBtn.addEventListener("click", closeMobileMenu);
+}
+if (drawerBackdrop) {
+  drawerBackdrop.addEventListener("click", closeMobileMenu);
+}
+mobileNavLinks.forEach((link) => {
+  link.addEventListener("click", closeMobileMenu);
+});

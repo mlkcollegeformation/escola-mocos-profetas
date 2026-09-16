@@ -3,217 +3,438 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="theme-color" content="#0B0907" />
-  <meta name="description" content="Inscrição para a Escola de Moços e Profetas — Tabernáculo de Profetas." />
-  <title>Escola de Moços e Profetas | Inscrição</title>
+  <meta name="theme-color" content="#061525" />
+  <meta name="description" content="Inscrição para a Escola de Moços e Profetas — MLK College Formation / Faculdade de Teologia Martin Luther King." />
+  <title>Escola de Moços e Profetas | MLK College Formation</title>
 
+  <!-- Google Fonts: Cormorant Garamond & Montserrat -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Montserrat:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="styles.css?v=2" />
+  <link rel="stylesheet" href="styles.css?v=6" />
 </head>
 <body>
-  <div class="page-glow page-glow--one"></div>
-  <div class="page-glow page-glow--two"></div>
-
-  <header class="hero">
-    <div class="hero__overlay"></div>
-    <div class="container hero__grid">
-      <div class="hero__content">
-        <span class="eyebrow">TABERNÁCULO DE PROFETAS</span>
-        <h1>Escola de<br><span>Moços e Profetas</span></h1>
-        <p class="hero__lead">Preparando uma geração para os propósitos de Deus.</p>
-
-        <div class="hero__chips">
-          <span>07/11 • 16h às 22h</span>
-          <span>08/11 • 08h às 11h</span>
+  <!-- HEADER INSTITUCIONAL AZUL-MARINHO -->
+  <header class="header" id="inicio">
+    <div class="container header__inner">
+      <a href="#inicio" class="header__brand" aria-label="MLK College Formation">
+        <div class="header__logo-box">
+          <img src="assets/logo-mlk.png" alt="Brasão MLK College Formation" class="header__logo" />
         </div>
+        <div class="header__brand-text">
+          <span class="header__brand-name">MLK COLLEGE FORMATION</span>
+          <span class="header__brand-sub">FACULDADE DE TEOLOGIA MARTIN LUTHER KING</span>
+        </div>
+      </a>
 
-        <p class="hero__verse">“Levantando moços que ouvem, discernem e profetizam.” <strong>1 Samuel 2:26</strong></p>
+      <nav class="header__nav" id="headerNav" aria-label="Navegação do site">
+        <ul class="nav-list">
+          <li><a href="#inicio" class="nav-link">INÍCIO</a></li>
+          <li><a href="#sobre" class="nav-link">SOBRE</a></li>
+          <li><a href="#programacao" class="nav-link">PROGRAMAÇÃO</a></li>
+          <li><a href="#inscricao" class="nav-link">INSCRIÇÃO</a></li>
+          <li><a href="#contato" class="nav-link">CONTATO</a></li>
+        </ul>
+        <a href="#inscricao" class="btn btn--nav">INSCREVA-SE</a>
+      </nav>
 
-        <a class="btn btn--primary" href="#inscricao">Quero me inscrever</a>
+      <button class="hamburger-btn" id="hamburgerBtn" type="button" aria-label="Abrir menu" aria-expanded="false" aria-controls="headerNav">
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+        <span class="hamburger-bar"></span>
+      </button>
+    </div>
+  </header>
+
+  <!-- OVERLAY MENU MOBILE -->
+  <div class="mobile-drawer" id="mobileDrawer" aria-hidden="true">
+    <div class="mobile-drawer__backdrop" id="drawerBackdrop"></div>
+    <div class="mobile-drawer__content">
+      <div class="mobile-drawer__header">
+        <div class="mobile-drawer__brand">
+          <img src="assets/logo-mlk.png" alt="Brasão MLK" class="drawer-logo" />
+          <span>MLK COLLEGE FORMATION</span>
+        </div>
+        <button class="drawer-close-btn" id="drawerCloseBtn" type="button" aria-label="Fechar menu">✕</button>
       </div>
+      <ul class="mobile-nav-list">
+        <li><a href="#inicio" class="mobile-nav-link">INÍCIO</a></li>
+        <li><a href="#sobre" class="mobile-nav-link">SOBRE</a></li>
+        <li><a href="#programacao" class="mobile-nav-link">PROGRAMAÇÃO</a></li>
+        <li><a href="#inscricao" class="mobile-nav-link">INSCRIÇÃO</a></li>
+        <li><a href="#contato" class="mobile-nav-link">CONTATO</a></li>
+      </ul>
+      <div class="mobile-drawer__footer">
+        <a href="#inscricao" class="btn btn--primary btn--full mobile-drawer__cta">INSCREVA-SE AGORA</a>
+      </div>
+    </div>
+  </div>
 
-      <figure class="hero__poster">
+  <main>
+    <!-- HERO / HEADLINE COM BACKGROUND EM VÍDEO REAL -->
+    <section class="hero">
+      <div class="hero__video-wrapper">
         <video
           id="heroVideo"
+          class="hero__video"
           autoplay
           muted
           loop
           playsinline
-          preload="metadata"
-          poster="assets/folder-evento.png?v=2"
+          preload="auto"
         >
-          <source src="assets/evento.mp4" type="video/mp4">
+          <source src="assets/headline.mp4" type="video/mp4">
         </video>
-        <button class="sound-toggle" id="soundToggle" type="button" aria-label="Ativar som">🔊 Ativar som</button>
-      </figure>
-    </div>
-  </header>
+        <div class="hero__overlay"></div>
+      </div>
 
-  <main>
-    <section class="section">
+      <div class="container hero__container">
+        <div class="hero__content">
+          <div class="hero__badge">
+            <span class="badge-gold-dot"></span>
+            <span>FORMAÇÃO MINISTERIAL EXCLUSIVA</span>
+          </div>
+
+          <h1 class="hero__title">
+            ESCOLA DE<br>
+            <span class="hero__title-gold">MOÇOS E PROFETAS</span>
+          </h1>
+
+          <p class="hero__lead">Preparando uma geração para os propósitos de Deus.</p>
+
+          <div class="hero__chips">
+            <div class="hero-chip">
+              <span class="chip-icon">📅</span>
+              <div class="chip-data">
+                <strong>07/11</strong>
+                <span>16h às 22h</span>
+              </div>
+            </div>
+            <div class="hero-chip">
+              <span class="chip-icon">📅</span>
+              <div class="chip-data">
+                <strong>08/11</strong>
+                <span>08h às 11h</span>
+              </div>
+            </div>
+            <div class="hero-chip hero-chip--location">
+              <span class="chip-icon">📍</span>
+              <div class="chip-data">
+                <strong>Vila Maria Alta — SP</strong>
+                <span>Av. Alberto Byington, 2354</span>
+              </div>
+            </div>
+          </div>
+
+          <blockquote class="hero__verse">
+            <p>“Levantando moços que ouvem, discernem e profetizam.”</p>
+            <cite>1 SAMUEL 2:26</cite>
+          </blockquote>
+
+          <div class="hero__actions">
+            <a class="btn btn--primary btn--glow" href="#inscricao">Quero me inscrever</a>
+            <button class="btn btn--sound" id="soundToggle" type="button" aria-label="Ativar som do vídeo">
+              <span id="soundIcon">🔊</span>
+              <span id="soundText">Ativar som</span>
+            </button>
+          </div>
+
+          <div class="hero__tagline">
+            <span class="tagline-word">CARÁTER</span>
+            <span class="tagline-dot">•</span>
+            <span class="tagline-word">DISCIPLINA</span>
+            <span class="tagline-dot">•</span>
+            <span class="tagline-word">PROPÓSITO</span>
+          </div>
+
+          <div class="hero__pillars-strip">
+            <span>DISCIPLINA</span>
+            <span class="strip-sep">|</span>
+            <span>IDENTIDADE</span>
+            <span class="strip-sep">|</span>
+            <span>CHAMADO</span>
+            <span class="strip-sep">|</span>
+            <span>PROPÓSITO</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SEÇÃO FORMAÇÃO DOS 5 MINISTÉRIOS -->
+    <section class="section section--ministries" id="programacao">
       <div class="container">
-        <div class="section__heading">
+        <div class="section__heading text-center">
           <span class="eyebrow">FORMAÇÃO DOS 5 MINISTÉRIOS</span>
-          <h2>Coluna Profética</h2>
-          <p>Uma imersão de formação, serviço, palavra, fidelidade, entrega, família e chamado.</p>
+          <h2 class="section__title">Coluna Profética</h2>
+          <div class="gold-divider"></div>
+          <p class="section__subtitle">
+            Uma imersão de formação, serviço, palavra, fidelidade, entrega, família e chamado.
+          </p>
         </div>
 
-        <div class="themes-grid">
-          <article class="theme-card"><span>01</span><h3>Ramá</h3><p>O Serviço e o Altar</p></article>
-          <article class="theme-card"><span>02</span><h3>Betel</h3><p>A Constância e a Fidelidade</p></article>
-          <article class="theme-card"><span>03</span><h3>Jericó</h3><p>A entrega que representa</p></article>
-          <article class="theme-card"><span>04</span><h3>Gilgal</h3><p>A Palavra Rhema</p></article>
-          <article class="theme-card"><span>05</span><h3>Gibeá</h3><p>Família e Chamado</p></article>
+        <div class="ministries-grid">
+          <article class="ministry-card">
+            <span class="ministry-card__number">01</span>
+            <h3 class="ministry-card__name">RAMÁ</h3>
+            <p class="ministry-card__desc">O Serviço e o Altar</p>
+            <div class="ministry-card__bottom-pillar">PALAVRA</div>
+          </article>
+
+          <article class="ministry-card">
+            <span class="ministry-card__number">02</span>
+            <h3 class="ministry-card__name">BETEL</h3>
+            <p class="ministry-card__desc">A Constância e a Fidelidade</p>
+            <div class="ministry-card__bottom-pillar">ORAÇÃO</div>
+          </article>
+
+          <article class="ministry-card">
+            <span class="ministry-card__number">03</span>
+            <h3 class="ministry-card__name">JERICÓ</h3>
+            <p class="ministry-card__desc">A entrega que representa</p>
+            <div class="ministry-card__bottom-pillar">COMUNHÃO</div>
+          </article>
+
+          <article class="ministry-card">
+            <span class="ministry-card__number">04</span>
+            <h3 class="ministry-card__name">GILGAL</h3>
+            <p class="ministry-card__desc">A Palavra Rhema</p>
+            <div class="ministry-card__bottom-pillar">CRESCIMENTO</div>
+          </article>
+
+          <article class="ministry-card">
+            <span class="ministry-card__number">05</span>
+            <h3 class="ministry-card__name">GIBEÁ</h3>
+            <p class="ministry-card__desc">Família e Chamado</p>
+            <div class="ministry-card__bottom-pillar">PROPÓSITO</div>
+          </article>
         </div>
 
-        <div class="pillars">
-          <span>Palavra</span>
-          <span>Oração</span>
-          <span>Comunhão</span>
-          <span>Crescimento</span>
-          <span>Propósito</span>
+        <div class="correspondence-wrap">
+          <div class="correspondence-title">CORRESPONDÊNCIA MINISTERIAL</div>
+          <div class="correspondences-row">
+            <div class="corr-pill"><span class="corr-src">RAMÁ</span> <span class="corr-sym">→</span> <span class="corr-dest">PALAVRA</span></div>
+            <div class="corr-pill"><span class="corr-src">BETEL</span> <span class="corr-sym">→</span> <span class="corr-dest">ORAÇÃO</span></div>
+            <div class="corr-pill"><span class="corr-src">JERICÓ</span> <span class="corr-sym">→</span> <span class="corr-dest">COMUNHÃO</span></div>
+            <div class="corr-pill"><span class="corr-src">GILGAL</span> <span class="corr-sym">→</span> <span class="corr-dest">CRESCIMENTO</span></div>
+            <div class="corr-pill"><span class="corr-src">GIBEÁ</span> <span class="corr-sym">→</span> <span class="corr-dest">PROPÓSITO</span></div>
+          </div>
         </div>
       </div>
     </section>
 
-    <section class="section section--dark">
-      <div class="container event-card">
-        <div>
-          <span class="eyebrow">INFORMAÇÕES DO EVENTO</span>
-          <h2>Reserve sua vaga</h2>
-        </div>
+    <!-- SEÇÃO SOBRE / INFORMAÇÕES DO EVENTO -->
+    <section class="section section--info" id="sobre">
+      <div class="container">
+        <div class="info-card">
+          <div class="info-card__header">
+            <span class="eyebrow">INFORMAÇÕES DO EVENTO</span>
+            <h2 class="section__title">Reserve sua vaga</h2>
+            <div class="gold-divider gold-divider--left"></div>
+            <p>Participe deste momento divisor de águas. As vagas são estritamente limitadas para garantir excelência e acompanhamento próximo.</p>
+          </div>
 
-        <div class="event-info">
-          <div>
-            <small>Dia 1</small>
-            <strong>07/11</strong>
-            <span>das 16h às 22h</span>
-          </div>
-          <div>
-            <small>Dia 2</small>
-            <strong>08/11</strong>
-            <span>das 08h às 11h</span>
-          </div>
-          <div>
-            <small>Local</small>
-            <strong>Av. Alberto Byington, 2354</strong>
-            <span>Vila Maria Alta — SP</span>
+          <div class="info-grid">
+            <div class="info-item">
+              <span class="info-item__tag">PRIMEIRO DIA</span>
+              <strong class="info-item__date">07/11</strong>
+              <span class="info-item__hours">das 16h às 22h</span>
+              <p class="info-item__text">Abertura ministerial, alinhamento de princípios e palavra profética.</p>
+            </div>
+
+            <div class="info-item">
+              <span class="info-item__tag">SEGUNDO DIA</span>
+              <strong class="info-item__date">08/11</strong>
+              <span class="info-item__hours">das 08h às 11h</span>
+              <p class="info-item__text">Oração, consagração prática, ativação de dons e encerramento comissionado.</p>
+            </div>
+
+            <div class="info-item info-item--place">
+              <span class="info-item__tag">LOCALIZAÇÃO</span>
+              <strong class="info-item__place">Av. Alberto Byington, 2354</strong>
+              <span class="info-item__hours">Vila Maria Alta — São Paulo, SP</span>
+              <p class="info-item__text">Estrutura acolhedora preparada para acolher os moços com segurança e conforto.</p>
+            </div>
           </div>
         </div>
       </div>
     </section>
 
+    <!-- SEÇÃO DE INSCRIÇÃO E COMPROVANTE -->
     <section class="section section--form" id="inscricao">
-      <div class="container registration">
-        <div class="registration__copy">
-          <span class="eyebrow">INSCRIÇÃO</span>
-          <h2>Faça seu cadastro</h2>
-          <p>Preencha seus dados abaixo. Após o envio, você receberá uma confirmação na própria página.</p>
-
-          <div class="security-note">
-            <strong>Privacidade</strong>
-            <p>Seus dados serão usados somente para organização e comunicação deste evento.</p>
-          </div>
+      <div class="container registration-container">
+        <div class="registration__intro text-center">
+          <span class="eyebrow">GARANTA SUA VAGA</span>
+          <h2 class="section__title">Faça sua inscrição</h2>
+          <div class="gold-divider"></div>
+          <p class="registration__lead">
+            Preencha seus dados abaixo. Após o envio, você receberá a confirmação com o número oficial de inscrição na própria página.
+          </p>
         </div>
 
-        <form class="form-card" id="registrationForm" novalidate>
-          <div class="form-group">
-            <label for="fullName">Nome completo</label>
-            <input id="fullName" name="fullName" type="text" autocomplete="name" placeholder="Digite seu nome completo" required minlength="3">
-            <small class="field-error" data-error-for="fullName"></small>
-          </div>
+        <div class="registration-wrapper">
+          <!-- FORMULÁRIO -->
+          <form class="form-card" id="registrationForm" novalidate>
+            <div class="form-group">
+              <label for="fullName">Nome completo <span class="req">*</span></label>
+              <input
+                id="fullName"
+                name="fullName"
+                type="text"
+                autocomplete="name"
+                placeholder="Ex.: Lucas Henrique Silva"
+                required
+                minlength="3"
+              />
+              <small class="field-error" data-error-for="fullName"></small>
+            </div>
 
-          <div class="form-group">
-            <label for="phone">Telefone / WhatsApp</label>
-            <input id="phone" name="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="(11) 99999-9999" required>
-            <small class="field-error" data-error-for="phone"></small>
-          </div>
+            <div class="form-group">
+              <label for="phone">Telefone (WhatsApp) <span class="req">*</span></label>
+              <input
+                id="phone"
+                name="phone"
+                type="tel"
+                inputmode="tel"
+                autocomplete="tel"
+                placeholder="(11) 99999-9999"
+                required
+              />
+              <small class="field-error" data-error-for="phone"></small>
+            </div>
 
-          <div class="form-group">
-            <label for="email">E-mail</label>
-            <input id="email" name="email" type="email" autocomplete="email" placeholder="voce@email.com" required>
-            <small class="field-error" data-error-for="email"></small>
-          </div>
+            <div class="form-group">
+              <label for="email">E-mail <span class="req">*</span></label>
+              <input
+                id="email"
+                name="email"
+                type="email"
+                autocomplete="email"
+                placeholder="seu.email@exemplo.com"
+                required
+              />
+              <small class="field-error" data-error-for="email"></small>
+            </div>
 
-          <label class="consent">
-            <input type="checkbox" id="consent" required>
-            <span>Autorizo o uso dos meus dados para fins de organização e comunicação deste evento.</span>
-          </label>
+            <label class="consent-box" for="consent">
+              <input type="checkbox" id="consent" required />
+              <span class="consent-text">
+                Autorizo o uso dos meus dados para fins de credenciamento, organização e comunicação exclusiva deste evento.
+              </span>
+            </label>
 
-          <button class="btn btn--primary btn--full" id="submitButton" type="submit">
-            Confirmar inscrição
-          </button>
+            <button class="btn btn--primary btn--full btn--submit" id="submitButton" type="submit">
+              REALIZAR INSCRIÇÃO
+            </button>
 
-          <div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
-        </form>
+            <div class="form-status" id="formStatus" role="status" aria-live="polite"></div>
 
-        <!-- COMPROVANTE ELEGANTE (Substitui a área do formulário após confirmação no Supabase) -->
-        <div class="voucher-card hidden" id="voucherCard">
-          <div class="voucher-header">
-            <div class="voucher-badge">✓ INSCRIÇÃO CONFIRMADA</div>
+            <div class="form-security-footer">
+              <span class="security-lock">🔒</span>
+              <span>Ambiente seguro. Seus dados estão protegidos sob a LGPD.</span>
+            </div>
+          </form>
+
+          <!-- COMPROVANTE ELEGANTE MLK (Substitui o formulário após confirmação da RPC no Supabase) -->
+          <div class="voucher-card hidden" id="voucherCard">
+            <div class="voucher-top-bar">
+              <div class="voucher-crest-wrap">
+                <img src="assets/logo-mlk.png" alt="Brasão MLK" class="voucher-crest-img" />
+              </div>
+              <div class="voucher-institution">
+                <span class="voucher-inst-name">MLK COLLEGE FORMATION</span>
+                <span class="voucher-inst-sub">FACULDADE DE TEOLOGIA MARTIN LUTHER KING</span>
+              </div>
+            </div>
+
+            <div class="voucher-badge-wrap">
+              <div class="voucher-badge">✓ INSCRIÇÃO CONFIRMADA</div>
+            </div>
+
             <div class="voucher-number-block">
               <span class="voucher-number-label">Nº DE INSCRIÇÃO</span>
               <span class="voucher-number" id="voucherNumber">001</span>
             </div>
-          </div>
 
-          <div class="voucher-divider"></div>
+            <div class="voucher-separator"></div>
 
-          <div class="voucher-body">
-            <p class="voucher-greeting">
-              <strong id="voucherName">Participante</strong>, sua inscrição foi realizada com sucesso!
-            </p>
+            <div class="voucher-body">
+              <p class="voucher-greeting">
+                <strong id="voucherName">Participante</strong>, sua inscrição foi realizada com sucesso!
+              </p>
 
-            <div class="voucher-event-info">
-              <h3 class="voucher-event-title">ESCOLA DE MOÇOS E PROFETAS</h3>
-              <p class="voucher-event-sub">Tabernáculo de Profetas</p>
-
-              <div class="voucher-details">
-                <div class="voucher-detail-item">
-                  <span class="voucher-detail-icon">📅</span>
-                  <span>07/11 — 16h às 22h</span>
+              <div class="voucher-event-box">
+                <h3 class="voucher-event-title">ESCOLA DE MOÇOS E PROFETAS</h3>
+                <div class="voucher-dates-grid">
+                  <div class="voucher-date-item">
+                    <span class="v-icon">📅</span>
+                    <span>07/11 — 16h às 22h</span>
+                  </div>
+                  <div class="voucher-date-item">
+                    <span class="v-icon">📅</span>
+                    <span>08/11 — 08h às 11h</span>
+                  </div>
+                  <div class="voucher-date-item voucher-date-item--full">
+                    <span class="v-icon">📍</span>
+                    <span>Vila Maria Alta — SP (Av. Alberto Byington, 2354)</span>
+                  </div>
                 </div>
-                <div class="voucher-detail-item">
-                  <span class="voucher-detail-icon">📅</span>
-                  <span>08/11 — 08h às 11h</span>
-                </div>
-                <div class="voucher-detail-item">
-                  <span class="voucher-detail-icon">📍</span>
-                  <span>Vila Maria Alta — SP</span>
-                </div>
+              </div>
+
+              <div class="voucher-confirmed-pill">
+                SUA VAGA ESTÁ CONFIRMADA
               </div>
             </div>
 
-            <div class="voucher-confirmed-tag">
-              SUA VAGA ESTÁ CONFIRMADA
+            <div class="voucher-actions">
+              <button class="btn btn--primary btn--full" id="downloadVoucherBtn" type="button">
+                ⬇ BAIXAR COMPROVANTE (PNG)
+              </button>
+              <p class="voucher-note">Salve o arquivo em seu celular para apresentar no credenciamento.</p>
             </div>
-          </div>
-
-          <div class="voucher-actions">
-            <button class="btn btn--primary btn--full" id="downloadVoucherBtn" type="button">
-              ⬇ Baixar comprovante
-            </button>
           </div>
         </div>
       </div>
     </section>
   </main>
 
-  <footer>
-    <div class="container footer__content">
-      <div>
-        <strong>Tabernáculo de Profetas</strong>
-        <span>Escola de Moços e Profetas</span>
+  <!-- FOOTER INSTITUCIONAL AZUL-MARINHO -->
+  <footer class="footer" id="contato">
+    <div class="container footer__inner">
+      <div class="footer__col footer__col--brand">
+        <div class="footer__logo-wrap">
+          <img src="assets/logo-mlk.png" alt="Brasão MLK College Formation" class="footer__logo" />
+        </div>
+        <div class="footer__brand-info">
+          <strong>MLK COLLEGE FORMATION</strong>
+          <span>Faculdade de Teologia Martin Luther King</span>
+        </div>
       </div>
-      <small>Discípulos hoje, referências amanhã.</small>
+
+      <div class="footer__col footer__col--quote">
+        <p class="footer__motto">“Instruir hoje, transformar o amanhã.”</p>
+        <span class="footer__copy">Escola de Moços e Profetas • Edição 2026</span>
+      </div>
+
+      <div class="footer__col footer__col--social">
+        <span class="social-title">SIGA NOSSAS REDES</span>
+        <div class="social-links">
+          <a href="https://www.instagram.com/faculdademartinlutherking?stkn=Z2h5cWk2eG52Zmcx" target="_blank" rel="noopener noreferrer" class="social-btn" aria-label="Instagram">Instagram</a>
+          <a href="https://www.youtube.com/@tabernaculodeprofetas" target="_blank" rel="noopener noreferrer" class="social-btn" aria-label="YouTube">YouTube</a>
+          <a href="admin.html" class="social-btn social-btn--admin" title="Painel Administrativo">Acesso Restrito</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer__bottom">
+      <div class="container footer__bottom-inner">
+        <small>© 2026 MLK College Formation. Todos os direitos reservados.</small>
+      </div>
     </div>
   </footer>
 
+  <!-- SCRIPTS -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="config.js"></script>
-  <script src="app.js?v=5"></script>
+  <script src="app.js?v=6"></script>
 </body>
 </html>
