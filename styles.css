@@ -518,6 +518,43 @@ h1, h2, h3, h4 {
   max-width: 760px;
 }
 
+.hero__badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.hero__tag-free {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: linear-gradient(135deg, #FFF1CE 0%, #E5C56E 50%, #C9A24D 100%);
+  color: #061525;
+  border: 1px solid #FFE7A6;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-family: var(--font-sans);
+  font-size: 0.74rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  box-shadow: 0 4px 18px rgba(201, 162, 77, 0.4), 0 1px 3px rgba(0, 0, 0, 0.3);
+  line-height: 1;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.hero__tag-free:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 22px rgba(201, 162, 77, 0.55);
+}
+
+.tag-free-icon {
+  flex-shrink: 0;
+  color: #061525;
+}
+
 .hero__badge {
   display: inline-flex;
   align-items: center;
@@ -531,7 +568,6 @@ h1, h2, h3, h4 {
   text-transform: uppercase;
   color: var(--gold-bright);
   backdrop-filter: blur(8px);
-  margin-bottom: 22px;
 }
 
 .badge-gold-dot {
@@ -1421,6 +1457,17 @@ h1, h2, h3, h4 {
   .hero {
     min-height: auto;
     padding: 60px 0 70px;
+  }
+
+  .hero__badges {
+    gap: 8px;
+    margin-bottom: 18px;
+  }
+
+  .hero__tag-free {
+    font-size: 0.68rem;
+    padding: 5px 12px;
+    letter-spacing: 0.12em;
   }
 
   .hero__chips {
