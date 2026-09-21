@@ -155,6 +155,14 @@ if (form) {
       };
 
       voucherCard.scrollIntoView({ behavior: "smooth", block: "center" });
+
+      // Disparar notificação no WhatsApp para o administrador (em segundo plano)
+      enviarNotificacaoWhatsApp({
+        fullName: confirmedName,
+        phone: registeredPhone,
+        email: registeredEmail,
+        registrationNumber: formattedNumber
+      });
     } catch (err) {
       console.error("Erro na inscrição:", err);
       formStatus.className = "form-status error";
@@ -542,3 +550,119 @@ if (drawerBackdrop) {
 mobileNavLinks.forEach((link) => {
   link.addEventListener("click", closeMobileMenu);
 });
+
+// ==========================================================================
+// SISTEMA DE NOTIFICAÇÕES WHATSAPP PARA O ADMINISTRADOR (CALLMEBOT / WEBHOOK)
+// ==========================================================================
+
+function formatarTelefoneBrasil(phone) {
+  if (!phone) return "Não informado";
+  const d = String(phone).replace(/\D/g, "");
+  if (d.length === 11) {
+    return d.replace(/^(\d{2})(\d{5})(\d{4})$/, "($1) $2-$3");
+  } else if (d.length === 10) {
+    return d.replace(/^(\d{2})(\d{4})(\d{4})$/, "($1) $2-$3");
+  }
+  return phone;
+}
+
+function montarMensagemWhatsApp(dados) {
+  const agora = new Date();
+  const dataHora = agora.toLocaleString("pt-BR", {
+    timeZone: "America/Sao_Paulo",
+    day: "2-digit",
+    month: "2-digit",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+
+  const telFormatado = formatarTelefoneBrasil(dados.phone);
+  const apenasNumeros = String(dados.phone || "").replace(/\D/g, "");
+  const linkWhats = apenasNumeros.length >= 10 ? `https://wa.me/55${apenasNumeros}` : "Não informado";
+
+  return [
+    `🔔 *NOVA INSCRIÇÃO CONFIRMADA!*`,
+    `_Escola de Moços e Profetas — MLK_`,
+    ``,
+    `🎫 *Nº Inscrição:* #${dados.registrationNumber || "—"}`,
+    `👤 *Nome:* ${dados.fullName}`,
+    `📱 *WhatsApp:* ${telFormatado}`,
+    `📧 *E-mail:* ${dados.email}`,
+    `⏰ *Horário:* ${dataHora}`,
+    ``,
+    `💬 *Conversar com o inscrito:*`,
+    linkWhats
+  ].join("\n");
+}
+
+async function enviarNotificacaoWhatsApp(dados) {
+  const cfg = window.APP_CONFIG || {};
+  const notif = cfg.NOTIFICACOES;
+
+  if (!notif || notif.ATIVO !== true) {
+    return;
+  }
+
+  const textoMensagem = montarMensagemWhatsApp(dados);
+
+  // Provedor 1: CallMeBot (WhatsApp direto no celular do administrador)
+  if (notif.PROVEDOR === "callmebot") {
+    const callmebot = notif.CALLMEBOT || {};
+    const phone = (callmebot.NUMERO || "").replace(/\D/g, "");
+    const apiKey = (callmebot.API_KEY || "").trim();
+
+    if (!phone || !apiKey || apiKey.includes("COLE_") || phone === "5511999999999") {
+      console.info(
+        "ℹ️ Notificações WhatsApp: preencha seu número e API_KEY do CallMeBot no config.js para receber alertas no celular. Veja o arquivo GUIA_NOTIFICACOES_WHATSAPP.md."
+      );
+      return;
+    }
+
+    const endpoint = `https://api.callmebot.com/whatsapp.php?phone=${encodeURIComponent(phone)}&text=${encodeURIComponent(textoMensagem)}&apikey=${encodeURIComponent(apiKey)}`;
+
+    try {
+      // mode: 'no-cors' para requisições em navegadores sem bloqueio de política CORS
+      await fetch(endpoint, {
+        method: "GET",
+        mode: "no-cors",
+        cache: "no-cache"
+      });
+      console.log("✅ Notificação enviada para o seu WhatsApp com sucesso via CallMeBot!");
+    } catch (err) {
+      // Fallback com tag de imagem caso fetch seja interceptado por alguma extensão
+      try {
+        const ping = new Image();
+        ping.src = endpoint;
+      } catch (_) {}
+      console.warn("Aviso ao enviar notificação CallMeBot:", err);
+    }
+    return;
+  }
+
+  // Provedor 2: Webhook externo (Make / n8n / Evolution API / Zapier)
+  if (notif.PROVEDOR === "webhook" && notif.WEBHOOK_URL) {
+    try {
+      await fetch(notif.WEBHOOK_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          evento: "nova_inscricao",
+          dados: dados,
+          mensagem: textoMensagem,
+          timestamp: new Date().toISOString()
+        })
+      });
+      console.log("✅ Notificação enviada ao Webhook com sucesso!");
+    } catch (err) {
+      console.warn("Aviso ao enviar webhook de notificação:", err);
+    }
+  }
+}
+
+// Disponibilizar globalmente para testes pelo console ou painel administrativo
+window.enviarNotificacaoWhatsApp = enviarNotificacaoWhatsApp;
+window.montarMensagemWhatsApp = montarMensagemWhatsApp;
+

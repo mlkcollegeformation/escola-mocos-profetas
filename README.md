@@ -54,8 +54,9 @@ where event_slug = 'escola-mocos-profetas-07-08-11';
 
 - `index.html` — página principal
 - `styles.css` — design system e responsividade
-- `app.js` — validação e envio para o banco
-- `config.js` — configuração do Supabase
+- `app.js` — validação, envio para o banco e notificação no WhatsApp
+- `config.js` — configuração do Supabase e do WhatsApp
+- `GUIA_NOTIFICACOES_WHATSAPP.md` — instruções para ativar as notificações no WhatsApp
 - `supabase.sql` — criação e segurança da tabela
 - `assets/folder-evento.png` — folder do evento
 

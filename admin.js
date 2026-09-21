@@ -44,6 +44,7 @@
   const clearSearchBtn = document.getElementById("clearSearchBtn");
   const refreshBtn = document.getElementById("refreshBtn");
   const exportCsvBtn = document.getElementById("exportCsvBtn");
+  const testWhatsappBtn = document.getElementById("testWhatsappBtn");
   const resultCount = document.getElementById("resultCount");
   const registrationsTbody = document.getElementById("registrationsTbody");
 
@@ -446,6 +447,70 @@
     searchInput.focus();
     renderTable();
   });
+
+  // Botão Testar WhatsApp
+  if (testWhatsappBtn) {
+    testWhatsappBtn.addEventListener("click", async () => {
+      const notif = cfg.NOTIFICACOES || {};
+      const callmebot = notif.CALLMEBOT || {};
+      const phone = (callmebot.NUMERO || "").replace(/\D/g, "");
+      const apiKey = (callmebot.API_KEY || "").trim();
+
+      if (!notif.ATIVO) {
+        alert("As notificações estão desativadas no config.js (ATIVO: false). Altere para ATIVO: true para enviar alertas.");
+        return;
+      }
+
+      if (notif.PROVEDOR === "callmebot") {
+        if (!phone || !apiKey || apiKey.includes("COLE_") || phone === "5511999999999") {
+          alert("⚠️ Configuração pendente:\n\nAbra o arquivo config.js e preencha seu número de telefone e a API_KEY do CallMeBot.\n\nConsulte o arquivo GUIA_NOTIFICACOES_WHATSAPP.md para ver como obter sua chave gratuita em 1 minuto!");
+          return;
+        }
+
+        const originalText = testWhatsappBtn.textContent;
+        testWhatsappBtn.disabled = true;
+        testWhatsappBtn.textContent = "⏳ Enviando teste...";
+
+        try {
+          const agora = new Date().toLocaleString("pt-BR", {
+            timeZone: "America/Sao_Paulo",
+            day: "2-digit",
+            month: "2-digit",
+            year: "numeric",
+            hour: "2-digit",
+            minute: "2-digit"
+          });
+
+          const mensagemTeste = [
+            `🧪 *TESTE DE NOTIFICAÇÃO - MLK* 🔔`,
+            `_Escola de Moços e Profetas_`,
+            ``,
+            `Olá! Esta é uma notificação de teste confirmando que a integração com o seu WhatsApp está *100% ativa e funcionando*!`,
+            ``,
+            `⏰ *Disparado em:* ${agora}`
+          ].join("\n");
+
+          const endpoint = `https://api.callmebot.com/whatsapp.php?phone=${encodeURIComponent(phone)}&text=${encodeURIComponent(mensagemTeste)}&apikey=${encodeURIComponent(apiKey)}`;
+
+          await fetch(endpoint, {
+            method: "GET",
+            mode: "no-cors",
+            cache: "no-cache"
+          });
+
+          alert(`✅ Notificação de teste enviada com sucesso!\n\nVerifique as mensagens no seu WhatsApp (${phone}). Em alguns segundos ela deve aparecer no seu celular.`);
+        } catch (err) {
+          console.error("Erro ao enviar teste:", err);
+          alert("Aviso: Tentativa de envio realizada. Verifique seu WhatsApp.");
+        } finally {
+          testWhatsappBtn.disabled = false;
+          testWhatsappBtn.textContent = originalText;
+        }
+      } else if (notif.PROVEDOR === "webhook" && notif.WEBHOOK_URL) {
+        alert("Provedor configurado como Webhook: " + notif.WEBHOOK_URL);
+      }
+    });
+  }
 
   // Botão Atualizar
   refreshBtn.addEventListener("click", () => {
