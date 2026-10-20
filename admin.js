@@ -39,18 +39,23 @@
   const statTotal = document.getElementById("statTotal");
   const statToday = document.getElementById("statToday");
   const todayDateHint = document.getElementById("todayDateHint");
+  const statPresent = document.getElementById("statPresent");
+  const statPresentHint = document.getElementById("statPresentHint");
 
   const searchInput = document.getElementById("searchInput");
   const clearSearchBtn = document.getElementById("clearSearchBtn");
+  const filterPills = document.getElementById("filterPills");
   const refreshBtn = document.getElementById("refreshBtn");
   const exportPdfBtn = document.getElementById("exportPdfBtn") || document.getElementById("exportCsvBtn");
   const testWhatsappBtn = document.getElementById("testWhatsappBtn");
   const resultCount = document.getElementById("resultCount");
   const registrationsTbody = document.getElementById("registrationsTbody");
+  const toastContainer = document.getElementById("toastContainer");
 
   // Estado da aplicação
   let allRegistrations = [];
   let isRecoveringPassword = false;
+  let currentFilter = "all"; // "all" | "present" | "pending"
 
   // Detectar se a URL contém tokens REAIS de recuperação vindo do e-mail do Supabase
   if ((window.location.hash.includes("type=recovery") && window.location.hash.includes("access_token")) ||
@@ -274,7 +279,7 @@
   async function fetchRegistrations() {
     registrationsTbody.innerHTML = `
       <tr>
-        <td colspan="4" class="table-empty">Atualizando lista de cadastros...</td>
+        <td colspan="6" class="table-empty">Atualizando lista de cadastros...</td>
       </tr>
     `;
     resultCount.textContent = "Carregando dados...";
@@ -300,7 +305,7 @@
       console.error("Erro ao buscar inscrições:", err);
       registrationsTbody.innerHTML = `
         <tr>
-          <td colspan="4" class="table-empty" style="color: var(--danger);">
+          <td colspan="6" class="table-empty" style="color: var(--danger);">
             ⚠️ ${err.message || "Erro ao carregar os dados. Verifique a conexão e as permissões RLS."}
           </td>
         </tr>
@@ -308,12 +313,36 @@
       resultCount.textContent = "Erro no carregamento";
       statTotal.textContent = "0";
       statToday.textContent = "0";
+      if (statPresent) statPresent.textContent = "0";
+      if (statPresentHint) statPresentHint.textContent = "0 presentes (0%)";
     }
   }
 
   // Atualizar contadores
   function updateStats() {
     statTotal.textContent = allRegistrations.length.toString();
+
+    // Contagem de presenças confirmadas
+    const presentCount = allRegistrations.filter((item) => Boolean(item.attended)).length;
+    const pendingCount = allRegistrations.length - presentCount;
+    const percentage = allRegistrations.length > 0
+      ? Math.round((presentCount / allRegistrations.length) * 100)
+      : 0;
+
+    if (statPresent) {
+      statPresent.textContent = presentCount.toString();
+    }
+    if (statPresentHint) {
+      statPresentHint.textContent = `${percentage}% presentes (${pendingCount} pendente${pendingCount === 1 ? '' : 's'})`;
+    }
+
+    // Contadores nos botões de filtro (pills)
+    const countPillAll = document.getElementById("countPillAll");
+    const countPillPresent = document.getElementById("countPillPresent");
+    const countPillPending = document.getElementById("countPillPending");
+    if (countPillAll) countPillAll.textContent = allRegistrations.length.toString();
+    if (countPillPresent) countPillPresent.textContent = presentCount.toString();
+    if (countPillPending) countPillPending.textContent = pendingCount.toString();
 
     // Data de hoje no formato local YYYY-MM-DD
     const now = new Date();
@@ -355,6 +384,26 @@
     return `${dia}/${mes}/${ano} às ${horas}:${minutos}`;
   }
 
+  // Formatar apenas hora e minuto para exibição do check-in
+  function formatTimeOnly(isoString) {
+    if (!isoString) return "";
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return "";
+    const horas = String(d.getHours()).padStart(2, "0");
+    const minutos = String(d.getMinutes()).padStart(2, "0");
+    return `${horas}:${minutos}`;
+  }
+
+  // Normalização de texto para busca tolerante a acentos e maiúsculas/minúsculas
+  function normalizeText(text) {
+    if (!text) return "";
+    return String(text)
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
+  }
+
   // Formatar telefone para exibição e link do WhatsApp
   function formatPhone(phone) {
     if (!phone) return { display: "—", link: null };
@@ -371,40 +420,170 @@
     return { display, link };
   }
 
-  // Renderizar a tabela com filtro de busca
+  // Notificação Toast na portaria
+  function showToast(message, type = "success") {
+    if (!toastContainer) return;
+    const toast = document.createElement("div");
+    toast.className = `toast-message ${type === "info" ? "toast-message--info" : ""}`;
+    toast.textContent = message;
+    toastContainer.appendChild(toast);
+
+    setTimeout(() => {
+      toast.style.transition = "opacity 0.3s, transform 0.3s";
+      toast.style.opacity = "0";
+      toast.style.transform = "translateY(10px)";
+      setTimeout(() => toast.remove(), 300);
+    }, 3500);
+  }
+
+  // Alternar confirmação de presença (Check-in do evento)
+  async function handleTogglePresence(regId, clickedBtn) {
+    const item = allRegistrations.find((r) => String(r.id) === String(regId));
+    if (!item) return;
+
+    const currentlyAttended = Boolean(item.attended);
+    const nextAttended = !currentlyAttended;
+
+    if (currentlyAttended) {
+      const confirmUndo = window.confirm(
+        `A presença de "${item.full_name}" (Nº ${formatRegNumber(item.registration_number)}) já está confirmada.\n\nDeseja cancelar/desfazer a confirmação de presença deste inscrito?`
+      );
+      if (!confirmUndo) return;
+    }
+
+    if (clickedBtn) {
+      clickedBtn.disabled = true;
+    }
+
+    const previousAttended = item.attended;
+    const previousAttendedAt = item.attended_at;
+    const nowIso = new Date().toISOString();
+
+    // Atualização otimista imediata na interface para agilidade na portaria
+    item.attended = nextAttended;
+    item.attended_at = nextAttended ? nowIso : null;
+    updateStats();
+    renderTable();
+
+    if (nextAttended) {
+      showToast(`✅ Presença confirmada: ${item.full_name} (Nº ${formatRegNumber(item.registration_number)})`);
+    } else {
+      showToast(`ℹ️ Presença desfeita para: ${item.full_name}`, "info");
+    }
+
+    try {
+      const { error } = await supabaseClient
+        .from("registrations")
+        .update({
+          attended: nextAttended,
+          attended_at: nextAttended ? nowIso : null
+        })
+        .eq("id", regId);
+
+      if (error) throw error;
+    } catch (err) {
+      console.error("Erro ao atualizar presença no Supabase:", err);
+      // Reverter estado local
+      item.attended = previousAttended;
+      item.attended_at = previousAttendedAt;
+      updateStats();
+      renderTable();
+
+      let errorMsg = "Não foi possível salvar a presença no banco de dados.";
+      if (err.code === "42703" || err.message?.includes("attended")) {
+        errorMsg = "A coluna 'attended' ainda não foi criada no Supabase. Execute o script supabase.sql no SQL Editor do Supabase.";
+      } else if (err.code === "42501" || err.message?.includes("policy") || err.message?.includes("permission")) {
+        errorMsg = "Permissão insuficiente (RLS) para atualizar. Execute a política de UPDATE para 'authenticated' no SQL Editor do Supabase (disponível em supabase.sql).";
+      } else if (err.message) {
+        errorMsg += " Detalhe: " + err.message;
+      }
+      alert("⚠️ " + errorMsg);
+    }
+  }
+
+  // Renderizar a tabela com filtro de busca e filtro de presença
   function renderTable() {
-    const query = searchInput.value.trim().toLowerCase();
+    const rawQuery = searchInput.value.trim();
+    const queryNorm = normalizeText(rawQuery);
+    const queryDigitsOnly = rawQuery.replace(/\D/g, "");
 
     const filtered = allRegistrations.filter((item) => {
-      if (!query) return true;
-      const regNum = formatRegNumber(item.registration_number).toLowerCase();
-      const name = (item.full_name || "").toLowerCase();
-      const phone = (item.phone || "").toLowerCase();
-      const email = (item.email || "").toLowerCase();
-      return regNum.includes(query) || name.includes(query) || phone.includes(query) || email.includes(query);
+      const isPresent = Boolean(item.attended);
+
+      // Filtro de status (Todos / Presentes / Pendentes)
+      if (currentFilter === "present" && !isPresent) return false;
+      if (currentFilter === "pending" && isPresent) return false;
+
+      if (!rawQuery) return true;
+
+      // 1. Busca por número de inscrição (suporta 005, 5, #005, etc.)
+      const rawNum = item.registration_number !== null && item.registration_number !== undefined
+        ? String(item.registration_number)
+        : "";
+      const paddedNum = formatRegNumber(item.registration_number).toLowerCase();
+
+      if (rawNum && queryDigitsOnly && (rawNum === queryDigitsOnly || paddedNum.includes(queryDigitsOnly))) {
+        return true;
+      }
+      if (paddedNum.includes(queryNorm)) {
+        return true;
+      }
+
+      // 2. Busca por nome (sem acento, case-insensitive)
+      const nameNorm = normalizeText(item.full_name);
+      if (nameNorm.includes(queryNorm)) {
+        return true;
+      }
+
+      // 3. Busca por telefone
+      const phoneDigits = (item.phone || "").replace(/\D/g, "");
+      if (queryDigitsOnly && phoneDigits.includes(queryDigitsOnly)) {
+        return true;
+      }
+
+      // 4. Busca por e-mail
+      const emailNorm = normalizeText(item.email);
+      if (emailNorm.includes(queryNorm)) {
+        return true;
+      }
+
+      return false;
     });
 
     // Atualizar texto de contagem
+    const presentCount = allRegistrations.filter((item) => Boolean(item.attended)).length;
+    const pendingCount = allRegistrations.length - presentCount;
+
     if (allRegistrations.length === 0) {
       resultCount.innerHTML = "Nenhuma inscrição registrada até o momento.";
-    } else if (query) {
-      resultCount.innerHTML = `Mostrando <strong>${filtered.length}</strong> de <strong>${allRegistrations.length}</strong> inscritos`;
+    } else if (rawQuery || currentFilter !== "all") {
+      let filterLabel = "";
+      if (currentFilter === "present") filterLabel = " (apenas presentes)";
+      if (currentFilter === "pending") filterLabel = " (apenas pendentes)";
+      resultCount.innerHTML = `Mostrando <strong>${filtered.length}</strong> de <strong>${allRegistrations.length}</strong> inscritos${filterLabel} • <strong>${presentCount}</strong> presentes`;
     } else {
-      resultCount.innerHTML = `Total de <strong>${allRegistrations.length}</strong> inscritos registrados`;
+      resultCount.innerHTML = `Total de <strong>${allRegistrations.length}</strong> inscritos • <strong>${presentCount}</strong> presentes (${pendingCount} pendentes)`;
     }
 
     if (filtered.length === 0) {
+      let emptyMsg = "Nenhum cadastro encontrado.";
+      if (rawQuery) {
+        emptyMsg = `Nenhum cadastro corresponde à busca "${escapeHtml(rawQuery)}".`;
+      } else if (currentFilter === "present") {
+        emptyMsg = "Nenhuma presença confirmada até o momento.";
+      } else if (currentFilter === "pending") {
+        emptyMsg = "Todos os inscritos já confirmaram presença!";
+      }
       registrationsTbody.innerHTML = `
         <tr>
-          <td colspan="5" class="table-empty">
-            ${query ? "Nenhum cadastro corresponde ao termo pesquisado." : "Nenhum cadastro encontrado."}
-          </td>
+          <td colspan="6" class="table-empty">${emptyMsg}</td>
         </tr>
       `;
       return;
     }
 
     const rowsHtml = filtered.map((item) => {
+      const isPresent = Boolean(item.attended);
       const regNumFormatted = formatRegNumber(item.registration_number);
       const dateFormatted = formatDate(item.created_at);
       const phoneInfo = formatPhone(item.phone);
@@ -417,10 +596,42 @@
         ? `<a href="mailto:${emailSafe}" title="Enviar e-mail">${emailSafe}</a>`
         : "—";
 
+      let presenceHtml = "";
+      if (isPresent) {
+        const timeStr = item.attended_at ? formatTimeOnly(item.attended_at) : "";
+        presenceHtml = `
+          <div class="checkin-group">
+            <button
+              type="button"
+              class="btn-checkin btn-checkin--confirmed"
+              data-id="${item.id}"
+              title="Presença confirmada! Clique para desfazer se necessário."
+            >
+              <span class="btn-checkin__icon">✅</span> Presença confirmada
+            </button>
+            ${timeStr ? `<span class="checkin-time" title="Horário do check-in">Entrada às ${timeStr}</span>` : ""}
+          </div>
+        `;
+      } else {
+        presenceHtml = `
+          <div class="checkin-group">
+            <button
+              type="button"
+              class="btn-checkin"
+              data-id="${item.id}"
+              title="Clique para confirmar a presença de ${escapeHtml(item.full_name || 'este inscrito')} no evento"
+            >
+              <span class="btn-checkin__icon">🎟️</span> Confirmar presença
+            </button>
+          </div>
+        `;
+      }
+
       return `
-        <tr>
-          <td class="td-num"><strong>${regNumFormatted}</strong></td>
-          <td class="td-name">${escapeHtml(item.full_name || "—")}</td>
+        <tr class="${isPresent ? "tr--present" : ""}">
+          <td class="td-num"><span class="badge-number">${regNumFormatted}</span></td>
+          <td class="td-presence">${presenceHtml}</td>
+          <td class="td-name"><strong>${escapeHtml(item.full_name || "—")}</strong></td>
           <td class="td-phone">${phoneHtml}</td>
           <td class="td-email">${emailHtml}</td>
           <td class="td-date">${dateFormatted}</td>
@@ -438,6 +649,31 @@
       .replace(/>/g, "&gt;")
       .replace(/"/g, "&quot;")
       .replace(/'/g, "&#039;");
+  }
+
+  // Evento de clique para o botão de confirmação de presença (delegação de evento)
+  registrationsTbody.addEventListener("click", (e) => {
+    const btn = e.target.closest(".btn-checkin");
+    if (!btn) return;
+    const regId = btn.getAttribute("data-id");
+    if (regId) {
+      handleTogglePresence(regId, btn);
+    }
+  });
+
+  // Filtros rápidos de presença (Pills: Todos | Presentes | Pendentes)
+  if (filterPills) {
+    filterPills.addEventListener("click", (e) => {
+      const btn = e.target.closest(".pill-btn");
+      if (!btn) return;
+      const filter = btn.getAttribute("data-filter");
+      if (!filter || filter === currentFilter) return;
+
+      currentFilter = filter;
+      filterPills.querySelectorAll(".pill-btn").forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+      renderTable();
+    });
   }
 
   // Busca em tempo real
@@ -543,27 +779,36 @@
     }
 
     const query = searchInput ? searchInput.value.trim().toLowerCase() : "";
-    const listToExport = query
-      ? allRegistrations.filter((item) => {
-          const regNum = formatRegNumber(item.registration_number).toLowerCase();
-          const name = (item.full_name || "").toLowerCase();
-          const phone = (item.phone || "").toLowerCase();
-          const email = (item.email || "").toLowerCase();
-          return regNum.includes(query) || name.includes(query) || phone.includes(query) || email.includes(query);
-        })
-      : allRegistrations;
+    const listToExport = allRegistrations.filter((item) => {
+      const isPresent = Boolean(item.attended);
+      if (currentFilter === "present" && !isPresent) return false;
+      if (currentFilter === "pending" && isPresent) return false;
+
+      if (!query) return true;
+      const regNum = formatRegNumber(item.registration_number).toLowerCase();
+      const name = (item.full_name || "").toLowerCase();
+      const phone = (item.phone || "").toLowerCase();
+      const email = (item.email || "").toLowerCase();
+      return regNum.includes(query) || name.includes(query) || phone.includes(query) || email.includes(query);
+    });
 
     if (listToExport.length === 0) {
-      alert("Nenhuma inscrição encontrada com o filtro de busca atual.");
+      alert("Nenhuma inscrição encontrada com os filtros e busca atuais.");
       return;
     }
 
+    const presentInExport = listToExport.filter((item) => Boolean(item.attended)).length;
+
     const rows = listToExport.map((item) => {
       const numInscricao = formatRegNumber(item.registration_number);
+      const presenca = item.attended
+        ? (item.attended_at ? `Presente (${formatTimeOnly(item.attended_at)})` : "Presente")
+        : "Pendente";
       const dataHora = formatDate(item.created_at);
       const phoneInfo = formatPhone(item.phone);
       return [
         numInscricao,
+        presenca,
         item.full_name || "—",
         phoneInfo.display,
         item.email || "—",
@@ -614,21 +859,28 @@
         doc.setTextColor(200, 211, 222);
         doc.setFontSize(8);
         doc.setFont("helvetica", "normal");
-        doc.text("Relatório Oficial de Inscrições Confirmadas", 14, 22);
+        doc.text("Relatório Oficial e Lista de Presença do Evento", 14, 22);
 
         // Metadados à direita
         doc.setTextColor(220, 230, 240);
         doc.setFontSize(7.5);
         doc.text(`Emissão: ${dataEmissao}`, 196, 11, { align: "right" });
         doc.setFont("helvetica", "bold");
-        doc.text(`Total: ${listToExport.length} inscrito(s)`, 196, 18, { align: "right" });
+        doc.text(`Total: ${listToExport.length} (${presentInExport} presentes)`, 196, 18, { align: "right" });
 
         let startY = 32;
+        let filterNoteText = "";
         if (query) {
+          filterNoteText += `* Busca: "${query}" `;
+        }
+        if (currentFilter !== "all") {
+          filterNoteText += `* Filtro: ${currentFilter === "present" ? "Apenas Presentes" : "Apenas Pendentes"} `;
+        }
+        if (filterNoteText) {
           doc.setFont("helvetica", "italic");
           doc.setFontSize(8);
           doc.setTextColor(90, 100, 110);
-          doc.text(`* Filtro aplicado na busca: "${query}" (${listToExport.length} resultado(s))`, 14, 32);
+          doc.text(filterNoteText + `(${listToExport.length} resultado(s))`, 14, 32);
           startY = 36;
         }
 
@@ -636,7 +888,7 @@
         if (typeof doc.autoTable === "function") {
           doc.autoTable({
             startY: startY,
-            head: [["Nº", "Nome Completo", "Telefone", "E-mail", "Data da Inscrição"]],
+            head: [["Nº", "Presença", "Nome Completo", "Telefone", "E-mail", "Data da Inscrição"]],
             body: rows,
             theme: "striped",
             margin: { left: 10, right: 10, top: 12, bottom: 16 },
@@ -661,18 +913,19 @@
               fillColor: [248, 250, 252]
             },
             columnStyles: {
-              0: { cellWidth: 16, halign: "center", fontStyle: "bold", textColor: [6, 21, 37] },
-              1: { cellWidth: 54 },
-              2: { cellWidth: 32 },
-              3: { cellWidth: 54 },
-              4: { cellWidth: 34, halign: "center" }
+              0: { cellWidth: 14, halign: "center", fontStyle: "bold", textColor: [6, 21, 37] },
+              1: { cellWidth: 28, halign: "center", fontStyle: "bold" },
+              2: { cellWidth: 46 },
+              3: { cellWidth: 30 },
+              4: { cellWidth: 46 },
+              5: { cellWidth: 26, halign: "center" }
             },
             didDrawPage: function(data) {
               if (data.pageNumber > 1) {
                 doc.setFontSize(7.5);
                 doc.setTextColor(130, 140, 150);
                 doc.setFont("helvetica", "normal");
-                doc.text("MLK College Formation • Escola de Moços e Profetas — Relatório de Inscrições", 10, 8);
+                doc.text("MLK College Formation • Escola de Moços e Profetas — Lista de Presença", 10, 8);
                 doc.setDrawColor(201, 162, 77);
                 doc.setLineWidth(0.3);
                 doc.line(10, 9.5, 200, 9.5);
@@ -695,7 +948,7 @@
             doc.text(`Página ${i} de ${totalPages}`, 200, 293, { align: "right" });
           }
 
-          doc.save(`inscritos_escola_mocos_profetas_${dateStr}.pdf`);
+          doc.save(`lista_presenca_escola_mocos_profetas_${dateStr}.pdf`);
           return;
         }
       } catch (err) {
@@ -704,10 +957,10 @@
     }
 
     // Fallback: Impressão direta do navegador configurada para salvar em PDF
-    generatePrintPdfFallback(listToExport, rows, dataEmissao, query);
+    generatePrintPdfFallback(listToExport, rows, dataEmissao, query, presentInExport);
   }
 
-  function generatePrintPdfFallback(listToExport, rows, dataEmissao, query) {
+  function generatePrintPdfFallback(listToExport, rows, dataEmissao, query, presentInExport) {
     const printWindow = window.open("", "_blank");
     if (!printWindow) {
       alert("Por favor, permita pop-ups nesta página para extrair o relatório em PDF.");
@@ -717,22 +970,24 @@
     const tableRowsHtml = rows.map((r) => `
       <tr>
         <td style="text-align:center; font-weight:bold; color:#061525;">${escapeHtml(r[0])}</td>
-        <td>${escapeHtml(r[1])}</td>
+        <td style="text-align:center; font-weight:600; color:${r[1].startsWith("Presente") ? "#15803d" : "#64748b"};">${escapeHtml(r[1])}</td>
         <td>${escapeHtml(r[2])}</td>
         <td>${escapeHtml(r[3])}</td>
-        <td style="text-align:center;">${escapeHtml(r[4])}</td>
+        <td>${escapeHtml(r[4])}</td>
+        <td style="text-align:center;">${escapeHtml(r[5])}</td>
       </tr>
     `).join("");
 
-    const filterNote = query
-      ? `<p style="font-size:12px; color:#64748b; margin:6px 0 14px 0; font-style:italic;">* Filtro aplicado na busca: "${escapeHtml(query)}" (${listToExport.length} resultados)</p>`
-      : "";
+    let filterNote = "";
+    if (query || currentFilter !== "all") {
+      filterNote = `<p style="font-size:12px; color:#64748b; margin:6px 0 14px 0; font-style:italic;">* Filtros: ${query ? `Busca "${escapeHtml(query)}" ` : ""}${currentFilter !== "all" ? `Status "${currentFilter}" ` : ""}(${listToExport.length} resultados, ${presentInExport} presentes)</p>`;
+    }
 
     printWindow.document.write(`<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
-  <title>Relatório de Inscrições - Escola de Moços e Profetas</title>
+  <title>Lista de Presença - Escola de Moços e Profetas</title>
   <style>
     @page { size: A4 portrait; margin: 12mm; }
     body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; padding: 12px; }
@@ -754,22 +1009,23 @@
     <div>
       <h2>MLK College Formation</h2>
       <h1>ESCOLA DE MOÇOS E PROFETAS</h1>
-      <p>Relatório Oficial de Inscrições Confirmadas</p>
+      <p>Relatório Oficial e Lista de Presença do Evento</p>
     </div>
     <div class="meta">
       <div>Emissão: ${dataEmissao}</div>
-      <div>Total: <strong>${listToExport.length} inscrito(s)</strong></div>
+      <div>Total: <strong>${listToExport.length} (${presentInExport} presentes)</strong></div>
     </div>
   </div>
   ${filterNote}
   <table>
     <thead>
       <tr>
-        <th style="width: 50px; text-align:center;">Nº</th>
+        <th style="width: 45px; text-align:center;">Nº</th>
+        <th style="width: 85px; text-align:center;">Presença</th>
         <th>Nome Completo</th>
-        <th style="width: 120px;">Telefone</th>
+        <th style="width: 115px;">Telefone</th>
         <th>E-mail</th>
-        <th style="width: 130px; text-align:center;">Data da Inscrição</th>
+        <th style="width: 125px; text-align:center;">Data da Inscrição</th>
       </tr>
     </thead>
     <tbody>

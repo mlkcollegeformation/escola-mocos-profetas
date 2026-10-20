@@ -85,13 +85,36 @@ for select
 to authenticated
 using (true);
 
+-- ==============================================================================
+-- CONTROLE DE PRESENÇA NO EVENTO (CHECK-IN NA PORTARIA)
+-- ==============================================================================
+
+-- 1. Adiciona as colunas attended e attended_at se ainda não existirem
+alter table public.registrations
+  add column if not exists attended boolean not null default false,
+  add column if not exists attended_at timestamptz;
+
+-- 2. Índice para otimização de busca e filtragem por presença
+create index if not exists registrations_attended_idx
+  on public.registrations (event_slug, attended);
+
+-- 3. Permite ao painel administrativo (usuários autenticados) atualizar presença e dados
+drop policy if exists "authenticated can update registrations" on public.registrations;
+create policy "authenticated can update registrations"
+on public.registrations
+for update
+to authenticated
+using (true)
+with check (true);
+
 -- Consulta para contar inscritos no painel:
--- select count(*) as total_inscritos
+-- select count(*) as total_inscritos,
+--        count(*) filter (where attended = true) as total_presentes
 -- from public.registrations
 -- where event_slug = 'escola-mocos-profetas-07-08-11';
 
--- Consulta para exportar a lista:
--- select created_at, full_name, phone, email
+-- Consulta para exportar a lista de presença:
+-- select registration_number, attended, attended_at, full_name, phone, email, created_at
 -- from public.registrations
 -- where event_slug = 'escola-mocos-profetas-07-08-11'
--- order by created_at desc;
+-- order by registration_number asc;

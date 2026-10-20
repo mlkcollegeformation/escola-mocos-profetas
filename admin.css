@@ -423,7 +423,7 @@ h1, h2, h3 {
 
 .metrics-grid {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: repeat(3, 1fr);
   gap: 20px;
   margin-bottom: 26px;
 }
@@ -444,6 +444,17 @@ h1, h2, h3 {
   background:
     radial-gradient(circle at 90% 10%, rgba(201, 162, 77, 0.1), transparent 60%),
     var(--navy-card);
+}
+
+.metric-card--present {
+  border-color: rgba(62, 207, 142, 0.45);
+  background:
+    radial-gradient(circle at 90% 10%, rgba(62, 207, 142, 0.12), transparent 60%),
+    var(--navy-card);
+}
+
+.metric-card--present .metric-value {
+  color: #79e0aa;
 }
 
 .metric-header {
@@ -498,10 +509,12 @@ h1, h2, h3 {
   gap: 16px;
   margin-bottom: 24px;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  flex-wrap: wrap;
 }
 
 .search-box {
   flex: 1;
+  min-width: 280px;
   position: relative;
   display: flex;
   align-items: center;
@@ -547,10 +560,65 @@ h1, h2, h3 {
   color: var(--off-white);
 }
 
+/* ==========================================================================
+   FILTROS DE PRESENÇA (PILLS)
+   ========================================================================== */
+
+.filter-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pill-btn {
+  background: rgba(4, 13, 23, 0.75);
+  border: 1px solid rgba(201, 162, 77, 0.24);
+  color: var(--text-muted);
+  padding: 8px 14px;
+  border-radius: var(--radius-pill);
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  user-select: none;
+}
+
+.pill-btn:hover {
+  border-color: var(--gold-institutional);
+  color: var(--off-white);
+  background: rgba(11, 34, 56, 0.8);
+}
+
+.pill-btn.active {
+  background: rgba(201, 162, 77, 0.22);
+  border-color: var(--gold-bright);
+  color: var(--gold-bright);
+  box-shadow: 0 0 10px rgba(201, 162, 77, 0.2);
+}
+
+.pill-btn--present.active {
+  background: rgba(62, 207, 142, 0.2);
+  border-color: #3ecf8e;
+  color: #79e0aa;
+  box-shadow: 0 0 10px rgba(62, 207, 142, 0.2);
+}
+
+.pill-btn--pending.active {
+  background: rgba(255, 184, 77, 0.2);
+  border-color: #ffb84d;
+  color: #ffd080;
+  box-shadow: 0 0 10px rgba(255, 184, 77, 0.2);
+}
+
 .toolbar-actions {
   display: flex;
   align-items: center;
   gap: 10px;
+  flex-wrap: wrap;
 }
 
 /* ==========================================================================
@@ -622,6 +690,138 @@ h1, h2, h3 {
   background: rgba(201, 162, 77, 0.04);
 }
 
+/* ==========================================================================
+   ESTILOS DE PRESENÇA (CHECK-IN) E TOAST
+   ========================================================================== */
+
+.td-presence {
+  white-space: nowrap;
+}
+
+.checkin-group {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 3px;
+  align-items: flex-start;
+}
+
+.btn-checkin {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 14px;
+  font-size: 0.77rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(201, 162, 77, 0.4);
+  background: rgba(201, 162, 77, 0.12);
+  color: var(--gold-bright);
+  cursor: pointer;
+  transition: var(--transition);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.btn-checkin:hover {
+  background: rgba(201, 162, 77, 0.25);
+  border-color: var(--gold-bright);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(201, 162, 77, 0.25);
+}
+
+.btn-checkin:active {
+  transform: translateY(0);
+}
+
+.btn-checkin--confirmed {
+  background: rgba(62, 207, 142, 0.16);
+  border-color: rgba(62, 207, 142, 0.6);
+  color: #79e0aa;
+}
+
+.btn-checkin--confirmed:hover {
+  background: rgba(62, 207, 142, 0.28);
+  border-color: #3ecf8e;
+  color: #a3f7c9;
+  box-shadow: 0 4px 14px rgba(62, 207, 142, 0.3);
+}
+
+.btn-checkin:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-checkin__icon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.checkin-time {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  padding-left: 2px;
+  letter-spacing: 0.02em;
+}
+
+.tr--present {
+  background: rgba(62, 207, 142, 0.04);
+}
+
+.tr--present:hover {
+  background: rgba(62, 207, 142, 0.08) !important;
+}
+
+/* ==========================================================================
+   TOAST NOTIFICATION (FEEDBACK VISUAL NA PORTARIA)
+   ========================================================================== */
+
+.toast-container {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+}
+
+.toast-message {
+  background: #07231c;
+  border: 1px solid #3ecf8e;
+  color: #79e0aa;
+  padding: 13px 20px;
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.6);
+  font-size: 0.84rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  pointer-events: auto;
+  animation: slideToastIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  max-width: 380px;
+}
+
+.toast-message--info {
+  background: #0b2238;
+  border-color: var(--gold-institutional);
+  color: var(--gold-bright);
+}
+
+@keyframes slideToastIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 .badge-number {
   display: inline-block;
   font-family: var(--font-serif);
@@ -666,6 +866,22 @@ h1, h2, h3 {
    RESPONSIVIDADE DO ADMIN
    ========================================================================== */
 
+@media (max-width: 992px) {
+  .metrics-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .toolbar-card {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .filter-pills {
+    width: 100%;
+    justify-content: flex-start;
+  }
+}
+
 @media (max-width: 768px) {
   .dash-nav__inner {
     flex-direction: column;
@@ -677,13 +893,13 @@ h1, h2, h3 {
     justify-content: space-between;
   }
 
-  .metrics-grid {
-    grid-template-columns: 1fr;
+  .filter-pills {
+    width: 100%;
   }
 
-  .toolbar-card {
-    flex-direction: column;
-    align-items: stretch;
+  .pill-btn {
+    flex: 1;
+    justify-content: center;
   }
 
   .toolbar-actions {
