@@ -199,7 +199,17 @@
     } catch (err) {
       console.error("Falha no login:", err);
       loginStatus.className = "auth-status error";
-      loginStatus.textContent = err.message;
+      const rawMsg = String(err?.message || err || "");
+      if (
+        rawMsg.includes("Failed to fetch") ||
+        rawMsg.includes("Load failed") ||
+        rawMsg.includes("NetworkError") ||
+        rawMsg.includes("TypeError")
+      ) {
+        loginStatus.textContent = "Não foi possível conectar ao banco de dados Supabase. Verifique se o projeto está ativo no painel do Supabase.";
+      } else {
+        loginStatus.textContent = err.message;
+      }
     } finally {
       loginSubmit.disabled = false;
       loginSubmit.textContent = "Entrar no painel";

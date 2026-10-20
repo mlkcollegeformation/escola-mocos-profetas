@@ -166,7 +166,18 @@ if (form) {
     } catch (err) {
       console.error("Erro na inscrição:", err);
       formStatus.className = "form-status error";
-      formStatus.textContent = err.message || "Não foi possível concluir agora. Tente novamente em instantes.";
+      const rawMsg = String(err?.message || err || "");
+      if (
+        rawMsg.includes("Failed to fetch") ||
+        rawMsg.includes("Load failed") ||
+        rawMsg.includes("NetworkError") ||
+        rawMsg.includes("fetch") ||
+        rawMsg.includes("TypeError")
+      ) {
+        formStatus.textContent = "Não foi possível conectar ao servidor. Por favor, tente novamente em instantes ou avise a organização.";
+      } else {
+        formStatus.textContent = err.message || "Não foi possível concluir agora. Tente novamente em instantes.";
+      }
     } finally {
       submitButton.disabled = false;
       submitButton.textContent = "REALIZAR INSCRIÇÃO";
