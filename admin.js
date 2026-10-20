@@ -43,7 +43,7 @@
   const searchInput = document.getElementById("searchInput");
   const clearSearchBtn = document.getElementById("clearSearchBtn");
   const refreshBtn = document.getElementById("refreshBtn");
-  const exportCsvBtn = document.getElementById("exportCsvBtn");
+  const exportPdfBtn = document.getElementById("exportPdfBtn") || document.getElementById("exportCsvBtn");
   const testWhatsappBtn = document.getElementById("testWhatsappBtn");
   const resultCount = document.getElementById("resultCount");
   const registrationsTbody = document.getElementById("registrationsTbody");
@@ -527,45 +527,271 @@
     fetchRegistrations();
   });
 
-  // Exportar para CSV com suporte a UTF-8 (compatível com Excel)
-  exportCsvBtn.addEventListener("click", () => {
-    if (allRegistrations.length === 0) {
+  // ============================================================================
+  // EXPORTAÇÃO EM PDF INSTITUCIONAL (MLK COLLEGE FORMATION)
+  // ============================================================================
+  if (exportPdfBtn) {
+    exportPdfBtn.addEventListener("click", () => {
+      exportToPdf();
+    });
+  }
+
+  function exportToPdf() {
+    if (!allRegistrations || allRegistrations.length === 0) {
       alert("Não há dados de inscrições para exportar.");
       return;
     }
 
-    const headers = ["Nº de Inscrição", "ID", "Data/Hora", "Nome Completo", "Telefone", "E-mail", "Consentimento LGPD", "Evento"];
-    
-    const rows = allRegistrations.map((item) => {
+    const query = searchInput ? searchInput.value.trim().toLowerCase() : "";
+    const listToExport = query
+      ? allRegistrations.filter((item) => {
+          const regNum = formatRegNumber(item.registration_number).toLowerCase();
+          const name = (item.full_name || "").toLowerCase();
+          const phone = (item.phone || "").toLowerCase();
+          const email = (item.email || "").toLowerCase();
+          return regNum.includes(query) || name.includes(query) || phone.includes(query) || email.includes(query);
+        })
+      : allRegistrations;
+
+    if (listToExport.length === 0) {
+      alert("Nenhuma inscrição encontrada com o filtro de busca atual.");
+      return;
+    }
+
+    const rows = listToExport.map((item) => {
       const numInscricao = formatRegNumber(item.registration_number);
       const dataHora = formatDate(item.created_at);
       const phoneInfo = formatPhone(item.phone);
       return [
         numInscricao,
-        item.id || "",
-        dataHora,
-        item.full_name || "",
+        item.full_name || "—",
         phoneInfo.display,
-        item.email || "",
-        item.consent ? "Sim" : "Não",
-        item.event_slug || ""
-      ].map((val) => `"${String(val).replace(/"/g, '""')}"`);
+        item.email || "—",
+        dataHora
+      ];
     });
 
-    // Byte Order Mark (BOM) UTF-8 para garantir abertura correta no Microsoft Excel
-    const csvContent = "\uFEFF" + [headers.map(h => `"${h}"`).join(";"), ...rows.map(r => r.join(";"))].join("\r\n");
+    const now = new Date();
+    const dateStr = now.toISOString().slice(0, 10);
+    const dataEmissao = now.toLocaleString("pt-BR", {
+      day: "2-digit",
+      month: "2-digit",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement("a");
-    const dateStr = new Date().toISOString().slice(0, 10);
-    link.setAttribute("href", url);
-    link.setAttribute("download", `inscritos_escola_mocos_profetas_${dateStr}.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  });
+    // Tentativa com jsPDF e autotable
+    if (window.jspdf && (window.jspdf.jsPDF || typeof window.jspdf === "function")) {
+      try {
+        const jsPDFClass = window.jspdf.jsPDF || window.jspdf;
+        const doc = new jsPDFClass({
+          orientation: "portrait",
+          unit: "mm",
+          format: "a4"
+        });
+
+        // Dimensões A4: 210 x 297 mm
+        // Cabeçalho institucional (Azul-marinho e Dourado)
+        doc.setFillColor(6, 21, 37); // #061525 Azul marinho
+        doc.rect(0, 0, 210, 26, "F");
+
+        // Faixa dourada decorativa
+        doc.setFillColor(201, 162, 77); // #C9A24D Dourado
+        doc.rect(0, 26, 210, 1.5, "F");
+
+        // Textos institucionais do cabeçalho
+        doc.setTextColor(201, 162, 77);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(8);
+        doc.text("MLK COLLEGE FORMATION • FACULDADE MARTIN LUTHER KING", 14, 9);
+
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(13);
+        doc.setFont("helvetica", "bold");
+        doc.text("ESCOLA DE MOÇOS E PROFETAS", 14, 16);
+
+        doc.setTextColor(200, 211, 222);
+        doc.setFontSize(8);
+        doc.setFont("helvetica", "normal");
+        doc.text("Relatório Oficial de Inscrições Confirmadas", 14, 22);
+
+        // Metadados à direita
+        doc.setTextColor(220, 230, 240);
+        doc.setFontSize(7.5);
+        doc.text(`Emissão: ${dataEmissao}`, 196, 11, { align: "right" });
+        doc.setFont("helvetica", "bold");
+        doc.text(`Total: ${listToExport.length} inscrito(s)`, 196, 18, { align: "right" });
+
+        let startY = 32;
+        if (query) {
+          doc.setFont("helvetica", "italic");
+          doc.setFontSize(8);
+          doc.setTextColor(90, 100, 110);
+          doc.text(`* Filtro aplicado na busca: "${query}" (${listToExport.length} resultado(s))`, 14, 32);
+          startY = 36;
+        }
+
+        // Tabela formatada via autoTable
+        if (typeof doc.autoTable === "function") {
+          doc.autoTable({
+            startY: startY,
+            head: [["Nº", "Nome Completo", "Telefone", "E-mail", "Data da Inscrição"]],
+            body: rows,
+            theme: "striped",
+            margin: { left: 10, right: 10, top: 12, bottom: 16 },
+            headStyles: {
+              fillColor: [6, 21, 37],
+              textColor: [247, 223, 148],
+              fontStyle: "bold",
+              fontSize: 8.5,
+              halign: "left",
+              cellPadding: 2.8
+            },
+            styles: {
+              font: "helvetica",
+              fontSize: 8,
+              cellPadding: 2.5,
+              textColor: [30, 41, 59],
+              lineColor: [226, 232, 240],
+              lineWidth: 0.1,
+              overflow: "linebreak"
+            },
+            alternateRowStyles: {
+              fillColor: [248, 250, 252]
+            },
+            columnStyles: {
+              0: { cellWidth: 16, halign: "center", fontStyle: "bold", textColor: [6, 21, 37] },
+              1: { cellWidth: 54 },
+              2: { cellWidth: 32 },
+              3: { cellWidth: 54 },
+              4: { cellWidth: 34, halign: "center" }
+            },
+            didDrawPage: function(data) {
+              if (data.pageNumber > 1) {
+                doc.setFontSize(7.5);
+                doc.setTextColor(130, 140, 150);
+                doc.setFont("helvetica", "normal");
+                doc.text("MLK College Formation • Escola de Moços e Profetas — Relatório de Inscrições", 10, 8);
+                doc.setDrawColor(201, 162, 77);
+                doc.setLineWidth(0.3);
+                doc.line(10, 9.5, 200, 9.5);
+              }
+            }
+          });
+
+          // Rodapé e paginação em todas as páginas
+          const totalPages = doc.internal.getNumberOfPages();
+          for (let i = 1; i <= totalPages; i++) {
+            doc.setPage(i);
+            doc.setDrawColor(226, 232, 240);
+            doc.setLineWidth(0.2);
+            doc.line(10, 289, 200, 289);
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(7.5);
+            doc.setTextColor(130, 140, 150);
+            doc.text("Documento gerado pelo Painel Administrativo MLK College Formation", 10, 293);
+            doc.text(`Página ${i} de ${totalPages}`, 200, 293, { align: "right" });
+          }
+
+          doc.save(`inscritos_escola_mocos_profetas_${dateStr}.pdf`);
+          return;
+        }
+      } catch (err) {
+        console.warn("Erro ao gerar PDF com jsPDF, utilizando impressão do navegador:", err);
+      }
+    }
+
+    // Fallback: Impressão direta do navegador configurada para salvar em PDF
+    generatePrintPdfFallback(listToExport, rows, dataEmissao, query);
+  }
+
+  function generatePrintPdfFallback(listToExport, rows, dataEmissao, query) {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) {
+      alert("Por favor, permita pop-ups nesta página para extrair o relatório em PDF.");
+      return;
+    }
+
+    const tableRowsHtml = rows.map((r) => `
+      <tr>
+        <td style="text-align:center; font-weight:bold; color:#061525;">${escapeHtml(r[0])}</td>
+        <td>${escapeHtml(r[1])}</td>
+        <td>${escapeHtml(r[2])}</td>
+        <td>${escapeHtml(r[3])}</td>
+        <td style="text-align:center;">${escapeHtml(r[4])}</td>
+      </tr>
+    `).join("");
+
+    const filterNote = query
+      ? `<p style="font-size:12px; color:#64748b; margin:6px 0 14px 0; font-style:italic;">* Filtro aplicado na busca: "${escapeHtml(query)}" (${listToExport.length} resultados)</p>`
+      : "";
+
+    printWindow.document.write(`<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Relatório de Inscrições - Escola de Moços e Profetas</title>
+  <style>
+    @page { size: A4 portrait; margin: 12mm; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; color: #1e293b; margin: 0; padding: 12px; }
+    .header { background: #061525; color: #ffffff; padding: 14px 18px; border-bottom: 3px solid #c9a24d; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; }
+    .header h1 { font-size: 16px; margin: 0 0 3px 0; color: #ffffff; font-weight: 700; letter-spacing: 0.5px; }
+    .header h2 { font-size: 11px; margin: 0; color: #c9a24d; text-transform: uppercase; font-weight: 600; letter-spacing: 1px; }
+    .header p { margin: 2px 0 0 0; font-size: 11px; color: #94a3b8; }
+    .header .meta { text-align: right; font-size: 11px; color: #cbd5e1; }
+    .header .meta strong { color: #f7df94; }
+    table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 11px; }
+    th { background: #061525; color: #f7df94; text-align: left; padding: 7px 8px; font-size: 11px; border: 1px solid #1e293b; }
+    td { padding: 6px 8px; border-bottom: 1px solid #e2e8f0; font-size: 10.5px; }
+    tr:nth-child(even) td { background: #f8fafc; }
+    .footer { margin-top: 22px; font-size: 10px; color: #94a3b8; display: flex; justify-content: space-between; border-top: 1px solid #e2e8f0; padding-top: 8px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h2>MLK College Formation</h2>
+      <h1>ESCOLA DE MOÇOS E PROFETAS</h1>
+      <p>Relatório Oficial de Inscrições Confirmadas</p>
+    </div>
+    <div class="meta">
+      <div>Emissão: ${dataEmissao}</div>
+      <div>Total: <strong>${listToExport.length} inscrito(s)</strong></div>
+    </div>
+  </div>
+  ${filterNote}
+  <table>
+    <thead>
+      <tr>
+        <th style="width: 50px; text-align:center;">Nº</th>
+        <th>Nome Completo</th>
+        <th style="width: 120px;">Telefone</th>
+        <th>E-mail</th>
+        <th style="width: 130px; text-align:center;">Data da Inscrição</th>
+      </tr>
+    </thead>
+    <tbody>
+      ${tableRowsHtml}
+    </tbody>
+  </table>
+  <div class="footer">
+    <span>Documento gerado pelo Painel Administrativo MLK College Formation</span>
+    <span>Faculdade de Teologia Martin Luther King</span>
+  </div>
+  <script>
+    window.onload = function() {
+      setTimeout(function() {
+        window.focus();
+        window.print();
+      }, 300);
+    };
+  <\/script>
+</body>
+</html>`);
+    printWindow.document.close();
+  }
 
   // Alternar visibilidade de senha (mostrar/ocultar)
   document.querySelectorAll(".toggle-password-btn").forEach((btn) => {

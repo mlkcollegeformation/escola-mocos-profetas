@@ -183,7 +183,7 @@
         </div>
       </section>
 
-      <!-- BARRA DE FERRAMENTAS: BUSCA, ATUALIZAÇÃO E EXPORTAÇÃO CSV -->
+      <!-- BARRA DE FERRAMENTAS: BUSCA, ATUALIZAÇÃO E EXPORTAÇÃO PDF -->
       <section class="toolbar-card">
         <div class="search-box">
           <span class="search-icon">🔍</span>
@@ -203,8 +203,8 @@
           <button class="btn btn--secondary" id="refreshBtn" type="button" title="Atualizar dados">
             🔄 Atualizar
           </button>
-          <button class="btn btn--primary" id="exportCsvBtn" type="button" title="Exportar tabela para arquivo CSV">
-            📥 Exportar CSV
+          <button class="btn btn--primary" id="exportPdfBtn" type="button" title="Exportar lista de inscritos em PDF">
+            📄 Exportar PDF
           </button>
         </div>
       </section>
@@ -246,7 +246,9 @@
   </div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.2/dist/jspdf.plugin.autotable.min.js"></script>
   <script src="config.js?v=2"></script>
-  <script src="admin.js?v=6"></script>
+  <script src="admin.js?v=7"></script>
 </body>
 </html>
