@@ -47,7 +47,7 @@ Para contar:
 ```sql
 select count(*) as total_inscritos
 from public.registrations
-where event_slug = 'escola-mocos-profetas-07-08-11';
+where event_slug = 'escola-mocos-profetas-13-14-11';
 ```
 
 ## Estrutura

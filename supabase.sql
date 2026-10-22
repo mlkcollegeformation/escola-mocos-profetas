@@ -7,7 +7,7 @@ create table if not exists public.registrations (
   phone text not null,
   email text not null,
   consent boolean not null default false,
-  event_slug text not null default 'escola-mocos-profetas-07-08-11'
+  event_slug text not null default 'escola-mocos-profetas-13-14-11'
 );
 
 -- Evita inscrição duplicada por e-mail ou telefone no mesmo evento
@@ -111,10 +111,10 @@ with check (true);
 -- select count(*) as total_inscritos,
 --        count(*) filter (where attended = true) as total_presentes
 -- from public.registrations
--- where event_slug = 'escola-mocos-profetas-07-08-11';
+-- where event_slug = 'escola-mocos-profetas-13-14-11';
 
 -- Consulta para exportar a lista de presença:
 -- select registration_number, attended, attended_at, full_name, phone, email, created_at
 -- from public.registrations
--- where event_slug = 'escola-mocos-profetas-07-08-11'
+-- where event_slug = 'escola-mocos-profetas-13-14-11'
 -- order by registration_number asc;
