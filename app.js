@@ -358,10 +358,10 @@ async function downloadVoucherAsPng(number, name) {
   ctx.stroke();
 
   // Datas e Local
-  ctx.font = "600 26px 'Montserrat', sans-serif";
+  ctx.font = "600 24px 'Montserrat', sans-serif";
   ctx.fillStyle = "#F8F6F0";
-  ctx.fillText("📅 13/11 — das 16h às 22h", 540, cardY + 205);
-  ctx.fillText("📅 14/11 — das 08h às 11h", 540, cardY + 265);
+  ctx.fillText("📅 13/11 (Sexta) — das 20:00 às 22:00", 540, cardY + 205);
+  ctx.fillText("📅 14/11 (Sábado) — 16:00 às 18:00 • 19:00 às 21:00", 540, cardY + 265);
   ctx.fillText("📍 Vila Maria Alta — São Paulo / SP", 540, cardY + 325);
 
   ctx.font = "400 21px 'Montserrat', sans-serif";
